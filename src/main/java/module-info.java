@@ -1,8 +1,8 @@
-module me.demo1 {
+module me.chessCapstone {
     requires javafx.controls;
     requires javafx.fxml;
 
 
-    opens me.demo1 to javafx.fxml;
-    exports me.demo1;
+    opens me.chessCapstone to javafx.fxml;
+    exports me.chessCapstone;
 }

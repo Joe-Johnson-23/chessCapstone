@@ -1,6 +1,5 @@
-package me.demo1;
+package me.chessCapstone;
 
-import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 

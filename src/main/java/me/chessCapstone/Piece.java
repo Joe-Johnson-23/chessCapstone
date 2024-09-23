@@ -1,4 +1,4 @@
-package me.demo1;
+package me.chessCapstone;
 
 import javafx.scene.Node;
 

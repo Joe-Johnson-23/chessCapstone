@@ -1,5 +1,4 @@
-package me.demo1;
-import javafx.scene.image.Image;
+package me.chessCapstone;
 import javafx.scene.image.ImageView;
 
 public class ImageViewWithCoordinates {

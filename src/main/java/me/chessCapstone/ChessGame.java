@@ -1,5 +1,5 @@
 
-package me.demo1;
+package me.chessCapstone;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
