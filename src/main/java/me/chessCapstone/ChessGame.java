@@ -6,6 +6,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.util.HashMap;
@@ -21,6 +22,8 @@ public class ChessGame extends Application {
 
     private double mouseX;
     private double mouseY;
+    double offsetX ;
+    double offsetY ;
 
     private int initialPieceCoordinateROW;
     private int initialPieceCoordinateCOL;
@@ -28,7 +31,7 @@ public class ChessGame extends Application {
 
     ImageView queenBlack = new Queen("black","queen").addQueen("black");
     ImageView queenWhite = new Queen("white","queen").addQueen("white");
-    private ImageView selectedPiece = queenBlack;
+    private ImageView selectedPiece = null;
 
     //may help with implementing a 'generic' selected piece... not being using as of now
     private Map<String, ImageView> imageViewMap = new HashMap<>();
@@ -44,23 +47,51 @@ public class ChessGame extends Application {
         setUpPieces(gridPane);
 
 
-        selectedPiece.setOnMousePressed(event -> {
-            mouseX = event.getSceneX() - selectedPiece.getLayoutX();
-            mouseY = event.getSceneY() - selectedPiece.getLayoutY();
+
+        gridPane.setOnMousePressed(event -> {
+//            mouseX = event.getSceneX() - selectedPiece.getLayoutX();
+//            mouseY = event.getSceneY() - selectedPiece.getLayoutY();
+
+
             int col = (int) (event.getSceneX() / TILE_SIZE);
             int row = (int) (event.getSceneY() / TILE_SIZE);
             initialPieceCoordinateCOL = col;
             initialPieceCoordinateROW = row;
+            if(selectedPiece == null) {
+
+                selectedPiece = imageViewMap.get(boardCurrent[col][row]);
+
+
+                double offsetX = event.getSceneX() - selectedPiece.getLayoutX();;
+                double offsetY = event.getSceneY() - selectedPiece.getLayoutY();
+
+
+                if(selectedPiece != null) {
+
+                    selectedPiece.setOnMouseDragged(event2 -> {
+
+                        System.out.println("ASD");
+                        selectedPiece.setLayoutX(event2.getSceneX() - offsetX);
+                        selectedPiece.setLayoutY(event2.getSceneY() - offsetY);
+//                       selectedPiece.toFront();
+
+                    });
+
+                }
+
+            }
+
         });
 
-//        selectedPiece.setOnMouseDragged(event -> {
-//            double offsetX = event.getSceneX() - mouseX;
-//            double offsetY = event.getSceneY() - mouseY;
-//            selectedPiece.setLayoutX(mouseX + offsetX);
-//            selectedPiece.setLayoutY(mouseY + offsetY);
-//        });
 
-        selectedPiece.setOnMouseReleased(event -> {
+
+
+
+
+
+
+
+        gridPane.setOnMouseReleased(event -> {
             if (selectedPiece != null) {
                 // Snap the piece to the nearest tile
                 int col = (int) (event.getSceneX() / TILE_SIZE);
@@ -78,7 +109,9 @@ public class ChessGame extends Application {
                 initialPieceCoordinateROW = 0;
                 initialPieceCoordinateCOL = 0;
 
-                //selectedPiece = null; // Reset selected piece
+                selectedPiece = null; // Reset selected piece
+
+
             }
 
             System.out.println("NEW BOARD");
@@ -122,6 +155,9 @@ public class ChessGame extends Application {
                 stile.setStyle((row + col) % 2 == 0 ? "-fx-background-color:WHITE": "-fx-background-color:GRAY");
 
                 stiles[row][col] = stile;
+
+
+
 
                 gridPane.add(stile, col, row);
 
