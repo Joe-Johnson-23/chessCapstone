@@ -6,7 +6,6 @@ import javafx.scene.Scene;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
 import javafx.stage.Stage;
 
 import java.util.HashMap;
@@ -31,7 +30,6 @@ public class ChessGame extends Application {
 
     ImageView queenBlack = new Queen("queen","black").getPiece();
     ImageView queenWhite = new Queen("queen","white").getPiece();
-    ImageView kingWhite = new Queen("king","white").getPiece();
     private ImageView selectedPiece = null;
 
     //may help with implementing a 'generic' selected piece... not being using as of now
@@ -63,7 +61,7 @@ public class ChessGame extends Application {
                 selectedPiece = imageViewMap.get(boardCurrent[col][row]);
 
 
-                double offsetX = event.getSceneX() - selectedPiece.getLayoutX();;
+                double offsetX = event.getSceneX() - selectedPiece.getLayoutX();
                 double offsetY = event.getSceneY() - selectedPiece.getLayoutY();
 
 
