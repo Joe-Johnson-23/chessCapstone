@@ -29,8 +29,9 @@ public class ChessGame extends Application {
     private int initialPieceCoordinateCOL;
 
 
-    ImageView queenBlack = new Queen("black","queen").addQueen("black");
-    ImageView queenWhite = new Queen("white","queen").addQueen("white");
+    ImageView queenBlack = new Queen("queen","black").getPiece();
+    ImageView queenWhite = new Queen("queen","white").getPiece();
+    ImageView kingWhite = new Queen("king","white").getPiece();
     private ImageView selectedPiece = null;
 
     //may help with implementing a 'generic' selected piece... not being using as of now
