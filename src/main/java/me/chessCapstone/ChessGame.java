@@ -113,6 +113,12 @@ public class ChessGame extends Application {
                         case "pawn":
                             isValidMove = isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
                             break;
+                        case "rook":
+                            isValidMove = isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                            break;
+                        case "king":
+                            isValidMove = isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                            break;
                         // Add cases for other piece types as needed
                     }
 
@@ -296,6 +302,12 @@ public class ChessGame extends Application {
                 if (typeOfPiece.contains("pawn") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: PURPLE;");
                 }
+                if (typeOfPiece.contains("rook") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                    stiles[row][col].setStyle("-fx-background-color: YELLOW;");
+                }
+                if (typeOfPiece.contains("king") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                    stiles[row][col].setStyle("-fx-background-color: PINK;");
+                }
             }
         }
     }
@@ -315,6 +327,20 @@ public class ChessGame extends Application {
         }
         // 대각선 이동
         else if (colDiff == rowDiff) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+
+        return false;
+    }
+
+    public boolean isValidRookMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+
+        // 수직 이동
+        if (startCol == endCol && startRow != endRow) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+        // 수평 이동
+        else if (startRow == endRow && startCol != endCol) {
             return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
         }
 
@@ -364,6 +390,17 @@ public class ChessGame extends Application {
         return false;
     }
 
+    public boolean isValidKingMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+
+
+        // 수직 이동
+        if (startCol == endCol && startRow != endRow) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+
+
+        return false;
+    }
 
 
 
