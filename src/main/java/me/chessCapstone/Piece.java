@@ -6,7 +6,7 @@ import javafx.scene.image.ImageView;
 
 import java.util.Objects;
 
-public class Piece  {
+public class Piece extends Node {
 
     protected String type; // e.g., "Pawn", "Knight", etc.
     protected String color; // e.g., "White", "Black"
@@ -15,9 +15,7 @@ public class Piece  {
     public Piece(String type, String color) {
         this.type = type;
         this.color = color;
-
         setPiece();
-
     }
 
     public String getType() {
@@ -48,85 +46,6 @@ public class Piece  {
         piece.setFitHeight(100);
     }
 
-
-
-
-    public boolean isValidQueenMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        // 수직 이동
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-        // 수평 이동
-        else if (startRow == endRow && startCol != endCol) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-        // 대각선 이동
-        else if (colDiff == rowDiff) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-
-        return false;
-    }
-
-    public boolean isValidBishopMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        if (colDiff == rowDiff) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-
-        return false;
-    }
-
-public boolean isValidKnightMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-    int colDiff = Math.abs(endCol - startCol);
-    int rowDiff = Math.abs(endRow - startRow);
-
-    // Knight moves in an L-shape: 2 squares in one direction and 1 square perpendicular to that
-    boolean isValidMove = (colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2);
-
-    // For knights, we don't need to check if the path is clear because they can jump over other pieces
-    // We only need to ensure the destination square is either empty or contains an opponent's piece
-    if (isValidMove) {
-        String destinationPiece = boardCurrent[endCol][endRow];
-        String currentPiece = boardCurrent[startCol][startRow];
-
-        // Check if the destination is empty or contains an opponent's piece
-        return destinationPiece.equals("null") || (!destinationPiece.startsWith(currentPiece.split("_")[1]) && isPathClear(startCol, startRow, endCol, endRow, boardCurrent));
-    }
-
-    return false;
-}
-
-
-
-
-    public boolean isPathClear(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDirection = Integer.compare(endCol, startCol);
-        int rowDirection = Integer.compare(endRow, startRow);
-
-        int currentCol = startCol + colDirection;
-        int currentRow = startRow + rowDirection;
-
-        while (currentCol != endCol || currentRow != endRow) {
-            if (!"null".equals(boardCurrent[currentCol][currentRow])) {
-                return false; // 경로에 다른 말이 있음
-            }
-            currentCol += colDirection;
-            currentRow += rowDirection;
-        }
-
-        // 목적지에 아군 말이 있는지 확인
-        if (!"null".equals(boardCurrent[endCol][endRow])) {
-            return false;
-        }
-
-        return true;
-    }
 
 
 }
