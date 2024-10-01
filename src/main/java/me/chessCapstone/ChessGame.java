@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import javafx.geometry.Point2D;
 
 
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -23,11 +24,6 @@ public class ChessGame extends Application {
 
     private int initialPieceCoordinateROW;
     private int initialPieceCoordinateCOL;
-
-//    //new way to make pieces
-//    Piece queenBlack_ = new Piece("queen", "black");
-//    Piece queenWhite_ = new Piece("queen", "white");
-
 
 
 
@@ -126,6 +122,7 @@ public class ChessGame extends Application {
                     //this Piece is to be able to call isValidQueenMove
                     Piece piece = new Piece(typeColor[0], typeColor[1]);
                     if (typeColor[0].equals("queen")  && piece.isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+
                         // 이동
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, col, row);
@@ -144,6 +141,7 @@ public class ChessGame extends Application {
                         boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
                         boardCurrent[col][row] = temp;
                     }else if (typeColor[0].equals("knight")  && piece.isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+
                         // 이동
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, col, row);
@@ -152,6 +150,26 @@ public class ChessGame extends Application {
                         String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
                         boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
                         boardCurrent[col][row] = temp;
+
+                    } else if (typeColor[0].equals("bishop")  && piece.isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+                        // 이동
+                        gridPane.getChildren().remove(selectedPiece);
+                        gridPane.add(selectedPiece, col, row);
+
+                        // boardCurrent 업데이트
+                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
+                        boardCurrent[col][row] = temp;
+                    }else if (typeColor[0].equals("knight")  && piece.isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+                        // 이동
+                        gridPane.getChildren().remove(selectedPiece);
+                        gridPane.add(selectedPiece, col, row);
+
+                        // boardCurrent 업데이트
+                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
+                        boardCurrent[col][row] = temp;
+
                     }
                     else {
                         // 이동 불가능한 경우 원래 위치로 돌아감
@@ -220,11 +238,9 @@ public class ChessGame extends Application {
                 stile.setPrefWidth(200);
                 stile.setPrefHeight(200);
 
-                stile.setStyle((row + col) % 2 == 0 ? "-fx-background-color:WHITE": "-fx-background-color:GRAY");
+                stile.setStyle((row + col) % 2 == 0 ? "-fx-background-color:WHITE" : "-fx-background-color:GRAY");
 
                 stiles[row][col] = stile;
-
-
 
 
                 gridPane.add(stile, col, row);
@@ -234,8 +250,10 @@ public class ChessGame extends Application {
         System.out.println();
 
     }
+
     private void setUpPieces(GridPane gridPane) {
 
+        //HashMap<String, Piece> pieces = new HashMap<>();
 
         //both queens
         boardCurrent[3][0] = "queen_black";
@@ -244,6 +262,7 @@ public class ChessGame extends Application {
         gridPane.add(queenWhite, 3, 7);
         imageViewMap.put("queen_black",queenBlack);
         imageViewMap.put("queen_white",queenWhite);
+
 
 
         //black bishops
@@ -278,9 +297,8 @@ public class ChessGame extends Application {
         gridPane.add(knightWhiteRight, 6, 7);
         imageViewMap.put("knight_white_right",knightWhiteRight);
 
-
-
     }
+
 
     private void resetTileColor() {
         for (int row = 0; row < BOARD_SIZE; row++) {
