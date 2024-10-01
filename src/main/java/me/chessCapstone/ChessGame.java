@@ -99,7 +99,9 @@ public class ChessGame extends Application {
 
                 if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
                     // 이동 가능 여부 체크
-                    if (isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row)) {
+                    String[] typeColor =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW].split("_");
+                    Piece piece = new Piece(typeColor[0], typeColor[1]);
+                    if (piece.isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
                         // 이동
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, col, row);
@@ -120,9 +122,9 @@ public class ChessGame extends Application {
                 }
 
                 // 초기 좌표 리셋
-                initialPieceCoordinateROW = -1;
-                initialPieceCoordinateCOL = -1;
-                selectedPiece = null;
+//                initialPieceCoordinateROW = -1;
+//                initialPieceCoordinateCOL = -1;
+//                selectedPiece = null;
 
 
                 // 체스판 상태 출력
@@ -199,13 +201,13 @@ public class ChessGame extends Application {
 
                 if(row == 0 && col == 3){
 
-                    boardCurrent[col][row] = "queenBlack";
+                    boardCurrent[col][row] = "queen_black";
                         gridPane.add(queenBlack, col, row);
 
                 }
                 if(row == 7 && col == 3){
 
-                    boardCurrent[col][row] = "queenWhite";
+                    boardCurrent[col][row] = "queen_white";
                     gridPane.add(queenWhite, col, row);
 
                 }
@@ -213,8 +215,8 @@ public class ChessGame extends Application {
 
             }
 
-        imageViewMap.put("queenBlack",queenBlack);
-        imageViewMap.put("queenWhite",queenWhite);
+        imageViewMap.put("queen_black",queenBlack);
+        imageViewMap.put("queen_white",queenWhite);
 
 
     }
@@ -232,58 +234,15 @@ public class ChessGame extends Application {
     }
 
     private void highlightValidMoves(int startCol, int startRow) {
+        String[] typeColor =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW].split("_");
+        Piece piece = new Piece(typeColor[0], typeColor[1]);
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
-                if (isValidQueenMove(startCol, startRow, col, row)) {
+                if (piece.isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: LIMEGREEN;");
                 }
             }
         }
-    }
-
-
-    private boolean isValidQueenMove(int startCol, int startRow, int endCol, int endRow) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        // 수직 이동
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow);
-        }
-        // 수평 이동
-        else if (startRow == endRow && startCol != endCol) {
-            return isPathClear(startCol, startRow, endCol, endRow);
-        }
-        // 대각선 이동
-        else if (colDiff == rowDiff) {
-            return isPathClear(startCol, startRow, endCol, endRow);
-        }
-
-        return false;
-    }
-
-
-    private boolean isPathClear(int startCol, int startRow, int endCol, int endRow) {
-        int colDirection = Integer.compare(endCol, startCol);
-        int rowDirection = Integer.compare(endRow, startRow);
-
-        int currentCol = startCol + colDirection;
-        int currentRow = startRow + rowDirection;
-
-        while (currentCol != endCol || currentRow != endRow) {
-            if (!"null".equals(boardCurrent[currentCol][currentRow])) {
-                return false; // 경로에 다른 말이 있음
-            }
-            currentCol += colDirection;
-            currentRow += rowDirection;
-        }
-
-        // 목적지에 아군 말이 있는지 확인
-        if (!"null".equals(boardCurrent[endCol][endRow])) {
-            return false;
-        }
-
-        return true;
     }
 
 

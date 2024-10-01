@@ -45,4 +45,53 @@ public class Piece extends Node {
         piece.setFitWidth(100);
         piece.setFitHeight(100);
     }
+
+
+
+
+    public boolean isValidQueenMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+        int colDiff = Math.abs(endCol - startCol);
+        int rowDiff = Math.abs(endRow - startRow);
+
+        // 수직 이동
+        if (startCol == endCol && startRow != endRow) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+        // 수평 이동
+        else if (startRow == endRow && startCol != endCol) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+        // 대각선 이동
+        else if (colDiff == rowDiff) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+
+        return false;
+    }
+
+
+    public boolean isPathClear(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+        int colDirection = Integer.compare(endCol, startCol);
+        int rowDirection = Integer.compare(endRow, startRow);
+
+        int currentCol = startCol + colDirection;
+        int currentRow = startRow + rowDirection;
+
+        while (currentCol != endCol || currentRow != endRow) {
+            if (!"null".equals(boardCurrent[currentCol][currentRow])) {
+                return false; // 경로에 다른 말이 있음
+            }
+            currentCol += colDirection;
+            currentRow += rowDirection;
+        }
+
+        // 목적지에 아군 말이 있는지 확인
+        if (!"null".equals(boardCurrent[endCol][endRow])) {
+            return false;
+        }
+
+        return true;
+    }
+
+
 }
