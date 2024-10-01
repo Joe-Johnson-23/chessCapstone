@@ -302,10 +302,10 @@ public class ChessGame extends Application {
                 if (typeOfPiece.contains("pawn") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: PURPLE;");
                 }
-                if (typeOfPiece.contains("rook") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                if (typeOfPiece.contains("rook") && isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: YELLOW;");
                 }
-                if (typeOfPiece.contains("king") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                if (typeOfPiece.contains("king") && isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: PINK;");
                 }
             }
@@ -365,43 +365,57 @@ public class ChessGame extends Application {
         // Knight moves in an L-shape: 2 squares in one direction and 1 square perpendicular to that
         boolean isValidMove = (colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2);
 
-        // For knights, we don't need to check if the path is clear because they can jump over other pieces
-        // We only need to ensure the destination square is either empty or contains an opponent's piece
         if (isValidMove) {
             String destinationPiece = boardCurrent[endCol][endRow];
             String currentPiece = boardCurrent[startCol][startRow];
 
-            // Check if the destination is empty or contains an opponent's piece
-            return destinationPiece.equals("null") || (!destinationPiece.startsWith(currentPiece.split("_")[1]) && isPathClear(startCol, startRow, endCol, endRow, boardCurrent));
+            // The destination must be either empty or occupied by an opponent's piece
+            return destinationPiece.equals("null") ||
+                    (!destinationPiece.contains(currentPiece.contains("white") ? "white" : "black"));
         }
 
         return false;
     }
 
     public boolean isValidPawnMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+        String pawn = boardCurrent[startCol][startRow];
+        boolean isWhite = pawn.contains("white");
+        int direction = isWhite ? -1 : 1; // White pawns move up (-1), black pawns move down (+1)
+        int rowDiff = endRow - startRow;
+        int colDiff = Math.abs(endCol - startCol);
 
-
-        // 수직 이동
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        // Regular move: 1 square forward
+        if (colDiff == 0 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null")) {
+            return true;
         }
+
+        // First move: option to move 2 squares forward
+        if (colDiff == 0 && rowDiff == 2 * direction &&
+                (isWhite ? startRow == 6 : startRow == 1) &&
+                boardCurrent[endCol][endRow].equals("null") &&
+                boardCurrent[endCol][endRow - direction].equals("null")) {
+            return true;
+        }
+
 
 
         return false;
     }
 
     public boolean isValidKingMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+        int colDiff = Math.abs(endCol - startCol);
+        int rowDiff = Math.abs(endRow - startRow);
 
+        // Regular king move
+        if (colDiff <= 1 && rowDiff <= 1) {
+            String destinationPiece = boardCurrent[endCol][endRow];
+            String currentPiece = boardCurrent[startCol][startRow];
 
-        // 수직 이동
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+            return destinationPiece.equals("null") ||
+                    (!destinationPiece.contains(currentPiece.contains("white") ? "white" : "black"));
         }
-
-
         return false;
     }
-
 
 
 
