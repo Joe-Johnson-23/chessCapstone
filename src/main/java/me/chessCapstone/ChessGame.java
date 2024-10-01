@@ -97,28 +97,26 @@ public class ChessGame extends Application {
 
                 if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
                     // 이동 가능 여부 체크
-                    String typeOfPiece =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                    String typeOfPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                    boolean isValidMove = false;
+                    //match the position between a non-digit and a digit without consuming any characters.
+                    switch (typeOfPiece.split("(?<=\\D)(?=\\d)")[0]) {
+                        case "queen":
+                            isValidMove = isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                            break;
+                        case "bishop":
+                            isValidMove = isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                            break;
+                        case "knight":
+                            isValidMove = isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                            break;
+                        case "pawn":
+                            isValidMove = isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                            break;
+                        // Add cases for other piece types as needed
+                    }
 
-                    if (typeOfPiece.contains("queen")  && isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
-
-                        // 이동
-                        gridPane.getChildren().remove(selectedPiece);
-                        gridPane.add(selectedPiece, col, row);
-
-                        // boardCurrent 업데이트
-                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                        boardCurrent[col][row] = temp;
-                    } else if (typeOfPiece.contains("bishop")  && isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
-                        // 이동
-                        gridPane.getChildren().remove(selectedPiece);
-                        gridPane.add(selectedPiece, col, row);
-
-                        // boardCurrent 업데이트
-                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                        boardCurrent[col][row] = temp;
-                    }else if (typeOfPiece.contains("knight")  && isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+                    if (isValidMove) {
 
                         // 이동
                         gridPane.getChildren().remove(selectedPiece);
@@ -128,35 +126,7 @@ public class ChessGame extends Application {
                         String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
                         boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
                         boardCurrent[col][row] = temp;
-
-                    } else if (typeOfPiece.contains("bishop")  && isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
-                        // 이동
-                        gridPane.getChildren().remove(selectedPiece);
-                        gridPane.add(selectedPiece, col, row);
-
-                        // boardCurrent 업데이트
-                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                        boardCurrent[col][row] = temp;
-                    }else if (typeOfPiece.contains("knight")  && isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
-                        // 이동
-                        gridPane.getChildren().remove(selectedPiece);
-                        gridPane.add(selectedPiece, col, row);
-
-                        // boardCurrent 업데이트
-                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                        boardCurrent[col][row] = temp;
-                    } else if (typeOfPiece.contains("pawn")  && isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
-                        // 이동
-                        gridPane.getChildren().remove(selectedPiece);
-                        gridPane.add(selectedPiece, col, row);
-
-                        // boardCurrent 업데이트
-                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                        boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                        boardCurrent[col][row] = temp;
-                    } else {
+                    }else {
                         // 이동 불가능한 경우 원래 위치로 돌아감
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
@@ -240,8 +210,8 @@ public class ChessGame extends Application {
 
         //HashMap<String, Piece> pieces = new HashMap<>();
 
-        String[] pieceList = {"rook1", "knight1", "bishop1", "king", "queen", "bishop2", "knight2", "rook2",
-                              "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7", "pawn8"};
+        String[] pieceList = {"rook1", "knight1", "bishop1", "king1", "queen1", "bishop2", "knight2", "rook2",
+                "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7", "pawn8"};
 
         String[] colors = {"black", "white"};
 
@@ -254,8 +224,8 @@ public class ChessGame extends Application {
                 if(col == 8) {
                     if(row == 1) {
                         row = 7;
-                        pieceList[3] = "queen";
-                        pieceList[4] = "king";
+                        pieceList[3] = "queen1";
+                        pieceList[4] = "king1";
                     } else if(row == 7) {
                         row--;
                     } else {
