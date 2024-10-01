@@ -45,4 +45,7 @@ public class Piece extends Node {
         piece.setFitWidth(100);
         piece.setFitHeight(100);
     }
+
+
+
 }
