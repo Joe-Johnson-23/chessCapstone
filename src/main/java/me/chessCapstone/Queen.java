@@ -6,4 +6,7 @@ public class Queen extends Piece {
         super(type, color);
     }
 
+
+
+
 }
