@@ -27,17 +27,17 @@ public class ChessGame extends Application {
 
 
 
-    ImageView queenBlack = new Queen("queen","black").getPiece();
-    ImageView queenWhite = new Queen("queen","white").getPiece();
-    ImageView bishopBlackLeft = new Bishop("bishop","black").getPiece();
-    ImageView bishopBlackRight = new Bishop("bishop","black").getPiece();
-    ImageView bishopWhiteLeft = new Bishop("bishop","white").getPiece();
-    ImageView bishopWhiteRight = new Bishop("bishop","white").getPiece();
+    ImageView queenBlack = new Queen("black").getPiece();
+    ImageView queenWhite = new Queen("white").getPiece();
+    ImageView bishopBlackLeft = new Bishop("black").getPiece();
+    ImageView bishopBlackRight = new Bishop("black").getPiece();
+    ImageView bishopWhiteLeft = new Bishop("white").getPiece();
+    ImageView bishopWhiteRight = new Bishop("white").getPiece();
 
-    ImageView knightBlackLeft = new Knight("knight","black").getPiece();
-    ImageView knightBlackRight = new Knight("knight","black").getPiece();
-    ImageView knightWhiteLeft = new Knight("knight","white").getPiece();
-    ImageView knightWhiteRight = new Knight("knight","white").getPiece();
+    ImageView knightBlackLeft = new Knight("black").getPiece();
+    ImageView knightBlackRight = new Knight("black").getPiece();
+    ImageView knightWhiteLeft = new Knight("white").getPiece();
+    ImageView knightWhiteRight = new Knight("white").getPiece();
 
 
 
