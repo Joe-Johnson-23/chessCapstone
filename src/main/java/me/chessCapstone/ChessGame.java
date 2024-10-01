@@ -8,6 +8,10 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.geometry.Point2D;
+
+import javax.print.attribute.HashPrintJobAttributeSet;
+import javax.swing.text.Position;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,9 +26,6 @@ public class ChessGame extends Application {
     private int initialPieceCoordinateROW;
     private int initialPieceCoordinateCOL;
 
-
-    ImageView queenBlack = new Queen("queen","black").getPiece();
-    ImageView queenWhite = new Queen("queen","white").getPiece();
     private ImageView selectedPiece = null;
 
     private Map<String, ImageView> imageViewMap = new HashMap<>();
@@ -175,11 +176,9 @@ public class ChessGame extends Application {
                 stile.setPrefWidth(200);
                 stile.setPrefHeight(200);
 
-                stile.setStyle((row + col) % 2 == 0 ? "-fx-background-color:WHITE": "-fx-background-color:GRAY");
+                stile.setStyle((row + col) % 2 == 0 ? "-fx-background-color:WHITE" : "-fx-background-color:GRAY");
 
                 stiles[row][col] = stile;
-
-
 
 
                 gridPane.add(stile, col, row);
@@ -189,35 +188,66 @@ public class ChessGame extends Application {
         System.out.println();
 
     }
+
     private void setUpPieces(GridPane gridPane) {
 
+        //HashMap<String, Piece> pieces = new HashMap<>();
 
+        String[] pieceList = {"rook1", "knight1", "bishop1", "king", "queen", "bishop2", "knight2", "rook2",
+                              "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7", "pawn8"};
 
-        for (int row = 0; row < BOARD_SIZE; row++) {
+        String[] colors = {"black", "white"};
 
-            for (int col = 0; col < BOARD_SIZE; col++) {
+        int row = 0, col = 0;
 
-                if(row == 0 && col == 3){
+        for(int x = 0; x < colors.length; x++) {
 
-                    boardCurrent[col][row] = "queenBlack";
-                        gridPane.add(queenBlack, col, row);
+            for(int y = 0; y < pieceList.length; y++) {
 
+                if(col == 8) {
+                    if(row == 1) {
+                        row = 7;
+                        pieceList[3] = "queen";
+                        pieceList[4] = "king";
+                    } else if(row == 7) {
+                        row--;
+                    } else {
+                        row++;
+                    }
+                    col = 0;
                 }
-                if(row == 7 && col == 3){
 
-                    boardCurrent[col][row] = "queenWhite";
-                    gridPane.add(queenWhite, col, row);
+                Piece nextPiece = createPiece(pieceList[y], colors[x]);
+                String typeColor = pieceList[y] + colors[x];
+                //pieces.put(typeColor, nextPiece);
+                boardCurrent[col][row] = typeColor;
+                gridPane.add(nextPiece.getPiece(), col, row);
+                imageViewMap.put(typeColor, nextPiece.getPiece());
+                col++;
 
-                }
             }
 
-            }
-
-        imageViewMap.put("queenBlack",queenBlack);
-        imageViewMap.put("queenWhite",queenWhite);
-
+        }
 
     }
+
+    private Piece createPiece(String type, String color) {
+
+        if(type.substring(type.length() - 1).matches("\\d")) {
+            type = type.substring(0, type.length() - 1);
+        }
+
+        return switch (type) {
+            case "king" -> new King(color);
+            case "queen" -> new Queen(color);
+            case "knight" -> new Knight(color);
+            case "bishop" -> new Bishop(color);
+            case "rook" -> new Rook(color);
+            case "pawn" -> new Pawn(color);
+            default -> null;
+        };
+    }
+
 
     private void resetTileColor() {
         for (int row = 0; row < BOARD_SIZE; row++) {
