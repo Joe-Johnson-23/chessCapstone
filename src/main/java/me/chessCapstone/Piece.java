@@ -6,7 +6,7 @@ import javafx.scene.image.ImageView;
 
 import java.util.Objects;
 
-public class Piece extends Node {
+public class Piece  {
 
     protected String type; // e.g., "Pawn", "Knight", etc.
     protected String color; // e.g., "White", "Black"
@@ -15,7 +15,9 @@ public class Piece extends Node {
     public Piece(String type, String color) {
         this.type = type;
         this.color = color;
+
         setPiece();
+
     }
 
     public String getType() {
@@ -68,6 +70,39 @@ public class Piece extends Node {
 
         return false;
     }
+
+    public boolean isValidBishopMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+        int colDiff = Math.abs(endCol - startCol);
+        int rowDiff = Math.abs(endRow - startRow);
+
+        if (colDiff == rowDiff) {
+            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        }
+
+        return false;
+    }
+
+public boolean isValidKnightMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+    int colDiff = Math.abs(endCol - startCol);
+    int rowDiff = Math.abs(endRow - startRow);
+
+    // Knight moves in an L-shape: 2 squares in one direction and 1 square perpendicular to that
+    boolean isValidMove = (colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2);
+
+    // For knights, we don't need to check if the path is clear because they can jump over other pieces
+    // We only need to ensure the destination square is either empty or contains an opponent's piece
+    if (isValidMove) {
+        String destinationPiece = boardCurrent[endCol][endRow];
+        String currentPiece = boardCurrent[startCol][startRow];
+
+        // Check if the destination is empty or contains an opponent's piece
+        return destinationPiece.equals("null") || (!destinationPiece.startsWith(currentPiece.split("_")[1]) && isPathClear(startCol, startRow, endCol, endRow, boardCurrent));
+    }
+
+    return false;
+}
+
+
 
 
     public boolean isPathClear(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
