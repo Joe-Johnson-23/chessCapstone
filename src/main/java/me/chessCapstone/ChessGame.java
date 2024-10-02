@@ -397,6 +397,21 @@ public class ChessGame extends Application {
             return true;
         }
 
+        // Capture move: 1 square diagonally
+        if (colDiff == 1 && rowDiff == direction && !boardCurrent[endCol][endRow].equals("null") &&
+                !boardCurrent[endCol][endRow].contains(isWhite ? "white" : "black")) {
+            return true;
+        }
+
+// En passant capture (simplified, doesn't check if the last move was a double pawn push)
+        if (colDiff == 1 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null") &&
+                !boardCurrent[endCol][startRow].equals("null") &&
+                boardCurrent[endCol][startRow].contains(isWhite ? "black" : "white") &&
+                boardCurrent[endCol][startRow].contains("pawn")) {
+            return true;
+        }
+
+
 
 
         return false;
