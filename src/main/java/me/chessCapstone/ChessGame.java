@@ -129,14 +129,16 @@ public class ChessGame extends Application {
                         gridPane.add(selectedPiece, col, row);
 
                         // boardCurrent 업데이트
-                        String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                        String currentPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
 
+                        //to capture piece.
                         String toBeRemoved = boardCurrent[col][row];
+
                         gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
 
 
                         boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                        boardCurrent[col][row] = temp;
+                        boardCurrent[col][row] = currentPiece;
                     }else {
                         // 이동 불가능한 경우 원래 위치로 돌아감
                         gridPane.getChildren().remove(selectedPiece);
@@ -389,12 +391,12 @@ public class ChessGame extends Application {
         int rowDiff = endRow - startRow;
         int colDiff = Math.abs(endCol - startCol);
 
-        // Regular move: 1 square forward
+        //Regular move: 1 square forward
         if (colDiff == 0 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null")) {
             return true;
         }
 
-        // First move: option to move 2 squares forward
+        //First move: option to move 2 squares forward
         if (colDiff == 0 && rowDiff == 2 * direction &&
                 (isWhite ? startRow == 6 : startRow == 1) &&
                 boardCurrent[endCol][endRow].equals("null") &&
@@ -402,13 +404,13 @@ public class ChessGame extends Application {
             return true;
         }
 
-        // Capture move: 1 square diagonally
+        //Capture move: 1 square diagonally
         if (colDiff == 1 && rowDiff == direction && !boardCurrent[endCol][endRow].equals("null") &&
                 !boardCurrent[endCol][endRow].contains(isWhite ? "white" : "black")) {
             return true;
         }
 
-// En passant capture (simplified, doesn't check if the last move was a double pawn push)
+//En passant capture (simplified, doesn't check if the last move was a double pawn push)
         if (colDiff == 1 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null") &&
                 !boardCurrent[endCol][startRow].equals("null") &&
                 boardCurrent[endCol][startRow].contains(isWhite ? "black" : "white") &&
@@ -443,23 +445,28 @@ public class ChessGame extends Application {
         int colDirection = Integer.compare(endCol, startCol);
         int rowDirection = Integer.compare(endRow, startRow);
 
+        String currentPiece = boardCurrent[startCol][startRow];
+        boolean isWhite = currentPiece.contains("white");
+
         int currentCol = startCol + colDirection;
         int currentRow = startRow + rowDirection;
 
         while (currentCol != endCol || currentRow != endRow) {
             if (!"null".equals(boardCurrent[currentCol][currentRow])) {
-                return false; // 경로에 다른 말이 있음
+                return false; // Path is blocked by a piece
             }
             currentCol += colDirection;
             currentRow += rowDirection;
         }
 
-        // 목적지에 아군 말이 있는지 확인
-        if (!"null".equals(boardCurrent[endCol][endRow])) {
-            return false;
+        // Check the destination square
+        String destinationPiece = boardCurrent[endCol][endRow];
+        if ("null".equals(destinationPiece)) {
+            return true; // Destination is empty, path is clear
+        } else {
+            // Allow capture of opponent's piece
+            return isWhite ? destinationPiece.contains("black") : destinationPiece.contains("white");
         }
-
-        return true;
     }
 
 
