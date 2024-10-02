@@ -130,6 +130,11 @@ public class ChessGame extends Application {
 
                         // boardCurrent 업데이트
                         String temp = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+
+                        String toBeRemoved = boardCurrent[col][row];
+                        gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
+
+
                         boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
                         boardCurrent[col][row] = temp;
                     }else {
@@ -285,7 +290,7 @@ public class ChessGame extends Application {
     }
 
     private void highlightValidMoves(int startCol, int startRow, String typeOfPiece) {
-        String[] typeColor =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW].split("_");
+
 
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
