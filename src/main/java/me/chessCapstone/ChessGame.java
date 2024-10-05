@@ -3,14 +3,14 @@ package me.chessCapstone;
 
 import javafx.application.Application;
 import javafx.scene.Scene;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import javafx.geometry.Point2D;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class ChessGame extends Application {
     private static final int TILE_SIZE = 100;
@@ -25,11 +25,13 @@ public class ChessGame extends Application {
 
     private ImageView selectedPiece = null;
 
+    private GridPane gridPane;
+
     private Map<String, ImageView> imageViewMap = new HashMap<>();
 
     @Override
     public void start(Stage primaryStage) {
-        GridPane gridPane = new GridPane();
+        gridPane = new GridPane();
         setupBoard(gridPane);
         setUpPieces(gridPane);
 
@@ -87,7 +89,7 @@ public class ChessGame extends Application {
 
                 resetTileColor();
 
-                // 마우스 좌표를 GridPane의 로컬 좌표로 변환
+                // convert mouse coordinates to local Gridpane coordinates
                 Point2D localPoint = gridPane.sceneToLocal(event.getSceneX(), event.getSceneY());
                 double x = localPoint.getX();
                 double y = localPoint.getY();
@@ -96,11 +98,24 @@ public class ChessGame extends Application {
                 int row = (int) (y / TILE_SIZE);
 
                 if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
-                    // 이동 가능 여부 체크
+                    // check if the move is valid
                     String typeOfPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                    String pieceType = typeOfPiece.replaceAll("\\d", ""); // rmove digit
+                    pieceType = pieceType.replace("Promoted", "");        // remove "Promoted"
+
+                    String color = "";
+                    if (pieceType.endsWith("white")) {
+                        pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "white"
+                        color = "white";
+                    } else if (pieceType.endsWith("black")) {
+                        pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "black"
+                        color = "black";
+                    }
+
                     boolean isValidMove = false;
                     //match the position between a non-digit and a digit without consuming any characters.
-                    switch (typeOfPiece.split("(?<=\\D)(?=\\d)")[0]) {
+//                    switch (typeOfPiece.split("(?<=\\D)(?=\\d)")[0]) {
+                    switch (pieceType) {
                         case "queen":
                             isValidMove = isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
                             break;
@@ -124,39 +139,50 @@ public class ChessGame extends Application {
 
                     if (isValidMove) {
 
-                        // 이동
+                        // move
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, col, row);
 
-                        // boardCurrent 업데이트
+                        // update boardCurrent
                         String currentPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                        String destinationPiece = boardCurrent[col][row];
 
                         //to capture piece.
                         String toBeRemoved = boardCurrent[col][row];
-
-                        gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
-
+                        if (!toBeRemoved.equals("null")) {
+                            ImageView capturedPiece = imageViewMap.get(destinationPiece);
+                            gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
+                            imageViewMap.remove(toBeRemoved);
+                        }
 
                         boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
                         boardCurrent[col][row] = currentPiece;
+
+                        // check and handle pawn promotion
+                        if (currentPiece.contains("pawn")) {
+                            boolean isWhite = currentPiece.contains("white");
+                            if ((isWhite && row == 0) || (!isWhite && row == 7)) {
+                                handlePawnPromotion(currentPiece, col, row, isWhite);
+                            }
+                        }
                     }else {
-                        // 이동 불가능한 경우 원래 위치로 돌아감
+                        // if move invalid, return to last position
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                     }
                 } else {
-                    // 체스판 밖으로 나간 경우 원래 위치로 돌아감
+                    // if move outside the board, return to last position
                     gridPane.getChildren().remove(selectedPiece);
                     gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                 }
 
-                // 초기 좌표 리셋
+                // reset initial coordinate
                 initialPieceCoordinateROW = -1;
                 initialPieceCoordinateCOL = -1;
                 selectedPiece = null;
 
 
-                // 체스판 상태 출력
+                // print the current board
                 printBoardState();
                 initialPieceCoordinateROW = 0;
                 initialPieceCoordinateCOL = 0;
@@ -186,7 +212,7 @@ public class ChessGame extends Application {
         }
 
 
-//        // 검은색 퀸 이벤트 핸들러 설정
+//        // set event handler
 //        setPieceEventHandlers(queenBlack, gridPane);
 
         Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
@@ -194,6 +220,36 @@ public class ChessGame extends Application {
         primaryStage.setTitle("Chess Game");
         primaryStage.show();
     }
+
+    private void handlePawnPromotion(String currentPiece, int col, int row, boolean isWhite) {
+        List<String> promotionOptions = Arrays.asList("Queen", "Rook", "Bishop", "Knight");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", promotionOptions);
+        dialog.setTitle("Pawn promotion");
+        dialog.setHeaderText(null);
+        dialog.setContentText("Choose piece you want to promote:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(choice -> {
+            // remove the current pawn image
+            ImageView pawnView = imageViewMap.get(currentPiece);
+            gridPane.getChildren().remove(pawnView);
+            imageViewMap.remove(currentPiece);
+
+            // create new piece
+            String newPieceType = choice.toLowerCase();
+            String newPieceName = newPieceType + (isWhite ? "white" : "black");
+            Piece promotedPiece = createPiece(newPieceType, isWhite ? "white" : "black");
+            ImageView promotedPieceView = promotedPiece.getPiece();
+
+            // add new piece
+            gridPane.add(promotedPieceView, col, row);
+            boardCurrent[col][row] = newPieceName;
+            imageViewMap.put(newPieceName, promotedPieceView);
+        });
+    }
+
+
+
 
     private void setupBoard(GridPane gridPane) {
 
@@ -262,10 +318,12 @@ public class ChessGame extends Application {
     }
 
     private Piece createPiece(String type, String color) {
+        // remvoe "Promoted"
+        type = type.replaceAll("\\d", "");
 
-        if(type.substring(type.length() - 1).matches("\\d")) {
-            type = type.substring(0, type.length() - 1);
-        }
+//        if(type.substring(type.length() - 1).matches("\\d")) {
+//            type = type.substring(0, type.length() - 1);
+//        }
 
         return switch (type) {
             case "king" -> new King(color);
@@ -292,27 +350,37 @@ public class ChessGame extends Application {
     }
 
     private void highlightValidMoves(int startCol, int startRow, String typeOfPiece) {
+        String pieceType = typeOfPiece.replaceAll("\\d", ""); // remove digit
 
+        String color = "";
+        if (pieceType.endsWith("white")) {
+            pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "white"
+            color = "white";
+        } else if (pieceType.endsWith("black")) {
+            pieceType = pieceType.substring(0, pieceType.length() - 5); //  remove "black"
+            color = "black";
+        }
 
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
 
-                if (typeOfPiece.contains("queen") && isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
+                //changed typeOfPiece to  pieceType
+                if (pieceType.contains("queen") && isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: LIMEGREEN;");
                 }
-                if (typeOfPiece.contains("bishop") && isValidBishopMove(startCol, startRow, col, row, boardCurrent)) {
+                if (pieceType.contains("bishop") && isValidBishopMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: RED;");
                 }
-                if (typeOfPiece.contains("knight") && isValidKnightMove(startCol, startRow, col, row, boardCurrent)) {
+                if (pieceType.contains("knight") && isValidKnightMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: BLUE;");
                 }
-                if (typeOfPiece.contains("pawn") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                if (pieceType.contains("pawn") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: PURPLE;");
                 }
-                if (typeOfPiece.contains("rook") && isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
+                if (pieceType.contains("rook") && isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: YELLOW;");
                 }
-                if (typeOfPiece.contains("king") && isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
+                if (pieceType.contains("king") && isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
                     stiles[row][col].setStyle("-fx-background-color: PINK;");
                 }
             }
@@ -324,15 +392,15 @@ public class ChessGame extends Application {
         int colDiff = Math.abs(endCol - startCol);
         int rowDiff = Math.abs(endRow - startRow);
 
-        // 수직 이동
+        // move vertically
         if (startCol == endCol && startRow != endRow) {
             return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
         }
-        // 수평 이동
+        // move horizontally
         else if (startRow == endRow && startCol != endCol) {
             return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
         }
-        // 대각선 이동
+        // move diagonal
         else if (colDiff == rowDiff) {
             return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
         }
@@ -342,11 +410,11 @@ public class ChessGame extends Application {
 
     public boolean isValidRookMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
 
-        // 수직 이동
+        // move vertically
         if (startCol == endCol && startRow != endRow) {
             return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
         }
-        // 수평 이동
+        // move horizontally
         else if (startRow == endRow && startCol != endCol) {
             return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
         }
