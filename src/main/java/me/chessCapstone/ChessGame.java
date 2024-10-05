@@ -16,6 +16,7 @@ public class ChessGame extends Application {
     private static final int TILE_SIZE = 100;
     private static final int BOARD_SIZE = 8;
 
+    HashMap<String, Piece> pieces = new HashMap<>();
     private StackPane[][] stiles = new StackPane[BOARD_SIZE][BOARD_SIZE];
     private String[][] boardCurrent = new String[BOARD_SIZE][BOARD_SIZE];
 
@@ -27,6 +28,11 @@ public class ChessGame extends Application {
 
     private GridPane gridPane;
 
+    //variable to add new piece upon promotion, so that board state has unique value
+    //if not 'queenwhite' will be made upon promotion instead of "queen3white"
+    //problem occurs if multiple pawns promote to queen (ie, "queenwhite" then "queenwhite")
+    //thus need global for now
+    int countForPromotion = 2;
     private Map<String, ImageView> imageViewMap = new HashMap<>();
 
     @Override
@@ -48,34 +54,17 @@ public class ChessGame extends Application {
 
         gridPane.setOnMousePressed(event -> {
 
-
-
             int col = (int) (event.getSceneX() / TILE_SIZE);
             int row = (int) (event.getSceneY() / TILE_SIZE);
             initialPieceCoordinateCOL = col;
             initialPieceCoordinateROW = row;
             if(selectedPiece == null) {
-
                 selectedPiece = imageViewMap.get(boardCurrent[col][row]);
 
-
-                double offsetX = event.getSceneX() - selectedPiece.getLayoutX();
-                double offsetY = event.getSceneY() - selectedPiece.getLayoutY();
-
                 String typeOfPiece =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                highlightValidMoves(col, row, typeOfPiece);
-//                if(selectedPiece != null) {
-//
-//                    selectedPiece.setOnMouseDragged(event2 -> {
-//
-//                        System.out.println("dragging mouse...");
-//                        selectedPiece.setLayoutX(event2.getSceneX() - offsetX);
-//                        selectedPiece.setLayoutY(event2.getSceneY() - offsetY);
-//
-//
-//                    });
-//
-//                }
+//              highlightValidMoves(col, row, typeOfPiece);
+                Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
+                piece.highlightValidMoves(col, row, stiles, boardCurrent, typeOfPiece);
 
             }
 
@@ -115,29 +104,32 @@ public class ChessGame extends Application {
                     boolean isValidMove = false;
                     //match the position between a non-digit and a digit without consuming any characters.
 //                    switch (typeOfPiece.split("(?<=\\D)(?=\\d)")[0]) {
-                    switch (pieceType) {
-                        case "queen":
-                            isValidMove = isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-                            break;
-                        case "bishop":
-                            isValidMove = isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-                            break;
-                        case "knight":
-                            isValidMove = isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-                            break;
-                        case "pawn":
-                            isValidMove = isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-                            break;
-                        case "rook":
-                            isValidMove = isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-                            break;
-                        case "king":
-                            isValidMove = isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-                            break;
-                        // Add cases for other piece types as needed
-                    }
+//                    switch (pieceType) {
+//                        case "queen":
+//                            isValidMove = isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+//                            break;
+//                        case "bishop":
+//                            isValidMove = isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+//                            break;
+//                        case "knight":
+//                            isValidMove = isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+//                            break;
+//                        case "pawn":
+//                            isValidMove = isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+//                            break;
+//                        case "rook":
+//                            isValidMove = isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+//                            break;
+//                        case "king":
+//                            isValidMove = isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+//                            break;
+//                        // Add cases for other piece types as needed
+//                    }
 
-                    if (isValidMove) {
+                    Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
+
+                    System.out.println(piece);
+                    if (piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
 
                         // move
                         gridPane.getChildren().remove(selectedPiece);
@@ -191,29 +183,10 @@ public class ChessGame extends Application {
 
             }
 
-            //Console log to show current board of pieces.
-            System.out.println("NEW BOARD");
-            for(int i = 0; i < BOARD_SIZE; i++) {
-
-                for(int j = 0; j < BOARD_SIZE; j++) {
-                    System.out.println("col" + i +"  row: " + j + " = " + boardCurrent[i][j]);
-                }
-            }
 
         });
 
 
-        //Console log to show current board of pieces.
-        for(int i = 0; i < BOARD_SIZE; i++) {
-
-            for(int j = 0; j < BOARD_SIZE; j++) {
-                System.out.println("col" + i +"  row: " + j + " = " + boardCurrent[i][j]);
-            }
-        }
-
-
-//        // set event handler
-//        setPieceEventHandlers(queenBlack, gridPane);
 
         Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
         primaryStage.setScene(scene);
@@ -235,11 +208,19 @@ public class ChessGame extends Application {
             gridPane.getChildren().remove(pawnView);
             imageViewMap.remove(currentPiece);
 
+            countForPromotion = countForPromotion + 1;
             // create new piece
             String newPieceType = choice.toLowerCase();
-            String newPieceName = newPieceType + (isWhite ? "white" : "black");
+            String newPieceName = newPieceType + countForPromotion+ (isWhite ? "white" : "black");
+            String newColor = (isWhite ? "white" : "black");
             Piece promotedPiece = createPiece(newPieceType, isWhite ? "white" : "black");
             ImageView promotedPieceView = promotedPiece.getPiece();
+
+
+            //FIXED problem
+
+            pieces.put(promotedPiece.getType() +countForPromotion+ newColor, promotedPiece);
+
 
             // add new piece
             gridPane.add(promotedPieceView, col, row);
@@ -306,6 +287,7 @@ public class ChessGame extends Application {
                 Piece nextPiece = createPiece(pieceList[y], colors[x]);
                 String typeColor = pieceList[y] + colors[x];
                 //pieces.put(typeColor, nextPiece);
+                pieces.put(typeColor, nextPiece);
                 boardCurrent[col][row] = typeColor;
                 gridPane.add(nextPiece.getPiece(), col, row);
                 imageViewMap.put(typeColor, nextPiece.getPiece());
@@ -318,7 +300,7 @@ public class ChessGame extends Application {
     }
 
     private Piece createPiece(String type, String color) {
-        // remvoe "Promoted"
+//         remvoe "Promoted"
         type = type.replaceAll("\\d", "");
 
 //        if(type.substring(type.length() - 1).matches("\\d")) {
@@ -349,193 +331,46 @@ public class ChessGame extends Application {
         }
     }
 
-    private void highlightValidMoves(int startCol, int startRow, String typeOfPiece) {
-        String pieceType = typeOfPiece.replaceAll("\\d", ""); // remove digit
-
-        String color = "";
-        if (pieceType.endsWith("white")) {
-            pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "white"
-            color = "white";
-        } else if (pieceType.endsWith("black")) {
-            pieceType = pieceType.substring(0, pieceType.length() - 5); //  remove "black"
-            color = "black";
-        }
-
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            for (int col = 0; col < BOARD_SIZE; col++) {
-
-                //changed typeOfPiece to  pieceType
-                if (pieceType.contains("queen") && isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
-                    stiles[row][col].setStyle("-fx-background-color: LIMEGREEN;");
-                }
-                if (pieceType.contains("bishop") && isValidBishopMove(startCol, startRow, col, row, boardCurrent)) {
-                    stiles[row][col].setStyle("-fx-background-color: RED;");
-                }
-                if (pieceType.contains("knight") && isValidKnightMove(startCol, startRow, col, row, boardCurrent)) {
-                    stiles[row][col].setStyle("-fx-background-color: BLUE;");
-                }
-                if (pieceType.contains("pawn") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
-                    stiles[row][col].setStyle("-fx-background-color: PURPLE;");
-                }
-                if (pieceType.contains("rook") && isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
-                    stiles[row][col].setStyle("-fx-background-color: YELLOW;");
-                }
-                if (pieceType.contains("king") && isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
-                    stiles[row][col].setStyle("-fx-background-color: PINK;");
-                }
-            }
-        }
-    }
-
-
-    public boolean isValidQueenMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        // move vertically
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-        // move horizontally
-        else if (startRow == endRow && startCol != endCol) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-        // move diagonal
-        else if (colDiff == rowDiff) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-
-        return false;
-    }
-
-    public boolean isValidRookMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-
-        // move vertically
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-        // move horizontally
-        else if (startRow == endRow && startCol != endCol) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-
-        return false;
-    }
-
-    public boolean isValidBishopMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        if (colDiff == rowDiff) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
-        }
-
-        return false;
-    }
-
-    public boolean isValidKnightMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        // Knight moves in an L-shape: 2 squares in one direction and 1 square perpendicular to that
-        boolean isValidMove = (colDiff == 2 && rowDiff == 1) || (colDiff == 1 && rowDiff == 2);
-
-        if (isValidMove) {
-            String destinationPiece = boardCurrent[endCol][endRow];
-            String currentPiece = boardCurrent[startCol][startRow];
-
-            // The destination must be either empty or occupied by an opponent's piece
-            return destinationPiece.equals("null") ||
-                    (!destinationPiece.contains(currentPiece.contains("white") ? "white" : "black"));
-        }
-
-        return false;
-    }
-
-    public boolean isValidPawnMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        String pawn = boardCurrent[startCol][startRow];
-        boolean isWhite = pawn.contains("white");
-        int direction = isWhite ? -1 : 1; // White pawns move up (-1), black pawns move down (+1)
-        int rowDiff = endRow - startRow;
-        int colDiff = Math.abs(endCol - startCol);
-
-        //Regular move: 1 square forward
-        if (colDiff == 0 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null")) {
-            return true;
-        }
-
-        //First move: option to move 2 squares forward
-        if (colDiff == 0 && rowDiff == 2 * direction &&
-                (isWhite ? startRow == 6 : startRow == 1) &&
-                boardCurrent[endCol][endRow].equals("null") &&
-                boardCurrent[endCol][endRow - direction].equals("null")) {
-            return true;
-        }
-
-        //Capture move: 1 square diagonally
-        if (colDiff == 1 && rowDiff == direction && !boardCurrent[endCol][endRow].equals("null") &&
-                !boardCurrent[endCol][endRow].contains(isWhite ? "white" : "black")) {
-            return true;
-        }
-
-//En passant capture (simplified, doesn't check if the last move was a double pawn push)
-        if (colDiff == 1 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null") &&
-                !boardCurrent[endCol][startRow].equals("null") &&
-                boardCurrent[endCol][startRow].contains(isWhite ? "black" : "white") &&
-                boardCurrent[endCol][startRow].contains("pawn")) {
-            return true;
-        }
+//    private void highlightValidMoves(int startCol, int startRow, String typeOfPiece) {
+//        String pieceType = typeOfPiece.replaceAll("\\d", ""); // remove digit
+//
+//        String color = "";
+//        if (pieceType.endsWith("white")) {
+//            pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "white"
+//            color = "white";
+//        } else if (pieceType.endsWith("black")) {
+//            pieceType = pieceType.substring(0, pieceType.length() - 5); //  remove "black"
+//            color = "black";
+//        }
+//
+//        for (int row = 0; row < BOARD_SIZE; row++) {
+//            for (int col = 0; col < BOARD_SIZE; col++) {
+//
+//                //changed typeOfPiece to  pieceType
+//                if (pieceType.contains("queen") && isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
+//                    stiles[row][col].setStyle("-fx-background-color: LIMEGREEN;");
+//                }
+//                if (pieceType.contains("bishop") && isValidBishopMove(startCol, startRow, col, row, boardCurrent)) {
+//                    stiles[row][col].setStyle("-fx-background-color: RED;");
+//                }
+//                if (pieceType.contains("knight") && isValidKnightMove(startCol, startRow, col, row, boardCurrent)) {
+//                    stiles[row][col].setStyle("-fx-background-color: BLUE;");
+//                }
+//                if (pieceType.contains("pawn") && isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+//                    stiles[row][col].setStyle("-fx-background-color: PURPLE;");
+//                }
+//                if (pieceType.contains("rook") && isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
+//                    stiles[row][col].setStyle("-fx-background-color: YELLOW;");
+//                }
+//                if (pieceType.contains("king") && isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
+//                    stiles[row][col].setStyle("-fx-background-color: PINK;");
+//                }
+//            }
+//        }
+//    }
 
 
 
-
-        return false;
-    }
-
-    public boolean isValidKingMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
-
-        // Regular king move
-        if (colDiff <= 1 && rowDiff <= 1) {
-            String destinationPiece = boardCurrent[endCol][endRow];
-            String currentPiece = boardCurrent[startCol][startRow];
-
-            return destinationPiece.equals("null") ||
-                    (!destinationPiece.contains(currentPiece.contains("white") ? "white" : "black"));
-        }
-        return false;
-    }
-
-
-
-    public boolean isPathClear(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDirection = Integer.compare(endCol, startCol);
-        int rowDirection = Integer.compare(endRow, startRow);
-
-        String currentPiece = boardCurrent[startCol][startRow];
-        boolean isWhite = currentPiece.contains("white");
-
-        int currentCol = startCol + colDirection;
-        int currentRow = startRow + rowDirection;
-
-        while (currentCol != endCol || currentRow != endRow) {
-            if (!"null".equals(boardCurrent[currentCol][currentRow])) {
-                return false; // Path is blocked by a piece
-            }
-            currentCol += colDirection;
-            currentRow += rowDirection;
-        }
-
-        // Check the destination square
-        String destinationPiece = boardCurrent[endCol][endRow];
-        if ("null".equals(destinationPiece)) {
-            return true; // Destination is empty, path is clear
-        } else {
-            // Allow capture of opponent's piece
-            return isWhite ? destinationPiece.contains("black") : destinationPiece.contains("white");
-        }
-    }
 
 
 
@@ -546,6 +381,7 @@ public class ChessGame extends Application {
                 System.out.println("col " + col + " row " + row + " = " + boardCurrent[col][row]);
             }
         }
+//        System.out.println(imageViewMap);
     }
 
 
