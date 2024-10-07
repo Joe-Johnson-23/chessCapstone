@@ -58,181 +58,188 @@ public class ChessGame extends Application {
 
 
         gridPane.setOnMousePressed(event -> {
-
             int col = (int) (event.getSceneX() / TILE_SIZE);
             int row = (int) (event.getSceneY() / TILE_SIZE);
             initialPieceCoordinateCOL = col;
             initialPieceCoordinateROW = row;
-            if(selectedPiece == null) {
 
+            String typeOfPiece = boardCurrent[col][row];
+            Piece piece = pieces.get(typeOfPiece);
 
-                String typeOfPiece =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-
-
-
-
-
-                if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
-                    selectedPiece = imageViewMap.get(boardCurrent[col][row]);
-                    piece.highlightValidMoves(col, row, stiles, boardCurrent, typeOfPiece);
+            if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
+                selectedPiece = imageViewMap.get(typeOfPiece);
+                if (selectedPiece != null) {
+                    // Store the initial mouse position
+                    selectedPiece.setUserData(new Point2D(event.getSceneX(), event.getSceneY()));
+                    // Bring the selected piece to the front
+                    selectedPiece.toFront();
                 }
-
-
-
-
-
+                piece.highlightValidMoves(col, row, stiles, boardCurrent, typeOfPiece);
             }
+        });
 
+        Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
+
+        scene.setOnMouseDragged(event -> {
+            if (selectedPiece != null) {
+                Point2D initialPos = (Point2D) selectedPiece.getUserData();
+                double deltaX = event.getSceneX() - initialPos.getX();
+                double deltaY = event.getSceneY() - initialPos.getY();
+                selectedPiece.setTranslateX(deltaX);
+                selectedPiece.setTranslateY(deltaY);
+            }
+        });
+
+        scene.setOnMouseReleased(event -> {
+            if (selectedPiece != null) {
+                // Reset the translation
+                selectedPiece.setTranslateX(0);
+                selectedPiece.setTranslateY(0);
+
+                String typeOfPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                //checking whose turn, in case of wrong click
+                if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
+
+                    if (selectedPiece != null) {
+
+                        selectedPiece.setLayoutX(0);
+                        selectedPiece.setLayoutY(0);
+
+                        resetTileColor();
+
+                        // convert mouse coordinates to local Gridpane coordinates
+                        Point2D localPoint = gridPane.sceneToLocal(event.getSceneX(), event.getSceneY());
+                        double x = localPoint.getX();
+                        double y = localPoint.getY();
+
+                        int col = (int) (x / TILE_SIZE);
+                        int row = (int) (y / TILE_SIZE);
+
+                        if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
+                            // check if the move is valid
+
+                            String pieceType = typeOfPiece.replaceAll("\\d", ""); // rmove digit
+
+
+                            Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
+
+                            System.out.println(piece);
+                            if (piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+                                // Check for castling
+                                if (pieceType.contains("king") && Math.abs(col - initialPieceCoordinateCOL) == 2) {
+                                    if (isCastlingValid(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row)) {
+                                        // Perform castling
+                                        boolean isKingSide = col > initialPieceCoordinateCOL;
+                                        int rookStartCol = isKingSide ? 7 : 0;
+                                        int rookEndCol = isKingSide ? col - 1 : col + 1;
+
+                                        // Move rook
+                                        String rookPiece = boardCurrent[rookStartCol][row];
+                                        ImageView rookView = imageViewMap.get(rookPiece);
+                                        gridPane.getChildren().remove(rookView);
+                                        gridPane.add(rookView, rookEndCol, row);
+                                        boardCurrent[rookStartCol][row] = "null";
+                                        boardCurrent[rookEndCol][row] = rookPiece;
+
+                                        // Update rook's moved status
+                                        pieces.get(rookPiece).setMoved(true);
+                                    } else {
+                                        // Invalid castling, return king to original position
+                                        gridPane.getChildren().remove(selectedPiece);
+                                        gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
+                                        return;
+                                    }
+
+                                }
+
+
+                                //doesnt disallow multiple en passant captures with same pawn
+                                //nor if the pawn has already captured.
+                                //TODO: fix
+                                if (globalEnPassant) {
+                                    // Determine the position of the pawn to be captured
+                                    int capturedPawnRow = typeOfPiece.contains("white") ? row + 1 : row - 1;
+                                    int capturedPawnCol = col;
+
+                                    // Remove the captured pawn from the board
+                                    String capturedPawn = boardCurrent[capturedPawnCol][capturedPawnRow];
+                                    boardCurrent[capturedPawnCol][capturedPawnRow] = "null";
+
+                                    // Remove the captured pawn's image from the GUI
+                                    gridPane.getChildren().remove(imageViewMap.get(capturedPawn));
+                                    imageViewMap.remove(capturedPawn);
+
+                                    globalEnPassant = false;
+                                }
+
+
+
+                                //check for king
+                                String destinationPiece = boardCurrent[col][row];
+                                if(destinationPiece.contains("king")){
+                                    initialPieceCoordinateROW = -1;
+                                    initialPieceCoordinateCOL = -1;
+                                    selectedPiece = null;
+                                    return;
+                                }
+
+                                // move from current position to new spot
+                                gridPane.getChildren().remove(selectedPiece);
+                                gridPane.add(selectedPiece, col, row);
+
+                                // update boardCurrent
+                                String currentPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
+                                // String destinationPiece = boardCurrent[col][row];
+
+                                //to capture piece.
+                                String toBeRemoved = boardCurrent[col][row];
+                                if (!toBeRemoved.equals("null")) {
+                                    gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
+                                    imageViewMap.remove(toBeRemoved);
+                                }
+
+                                boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
+                                boardCurrent[col][row] = currentPiece;
+
+                                // check and handle pawn promotion
+                                if (currentPiece.contains("pawn")) {
+                                    boolean isWhite = currentPiece.contains("white");
+                                    if ((isWhite && row == 0) || (!isWhite && row == 7)) {
+                                        handlePawnPromotion(currentPiece, col, row, isWhite);
+                                    }
+                                }
+
+                                // Update piece's moved status
+                                piece.setMoved(true);
+                                switchTurn();
+
+                            }else {
+                                // if move invalid, return to last position
+                                gridPane.getChildren().remove(selectedPiece);
+                                gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
+                            }
+                        } else {
+                            // if move outside the board, return to last position
+                            gridPane.getChildren().remove(selectedPiece);
+                            gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
+                        }
+
+                        // reset initial coordinate
+                        initialPieceCoordinateROW = -1;
+                        initialPieceCoordinateCOL = -1;
+                        // print the current board
+                        printBoardState();
+                        selectedPiece = null; // Reset selected piece
+
+                    }
+
+
+                }
+            }
         });
 
 
 
-        gridPane.setOnMouseReleased(event -> {
-
-            String typeOfPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-            //checking whose turn, in case of wrong click
-            if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
-
-                if (selectedPiece != null) {
-
-                    selectedPiece.setLayoutX(0);
-                    selectedPiece.setLayoutY(0);
-
-                    resetTileColor();
-
-                    // convert mouse coordinates to local Gridpane coordinates
-                    Point2D localPoint = gridPane.sceneToLocal(event.getSceneX(), event.getSceneY());
-                    double x = localPoint.getX();
-                    double y = localPoint.getY();
-
-                    int col = (int) (x / TILE_SIZE);
-                    int row = (int) (y / TILE_SIZE);
-
-                    if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
-                        // check if the move is valid
-
-                        String pieceType = typeOfPiece.replaceAll("\\d", ""); // rmove digit
-
-
-                        Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-
-                        System.out.println(piece);
-                        if (piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
-                            // Check for castling
-                            if (pieceType.contains("king") && Math.abs(col - initialPieceCoordinateCOL) == 2) {
-                                if (isCastlingValid(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row)) {
-                                    // Perform castling
-                                    boolean isKingSide = col > initialPieceCoordinateCOL;
-                                    int rookStartCol = isKingSide ? 7 : 0;
-                                    int rookEndCol = isKingSide ? col - 1 : col + 1;
-
-                                    // Move rook
-                                    String rookPiece = boardCurrent[rookStartCol][row];
-                                    ImageView rookView = imageViewMap.get(rookPiece);
-                                    gridPane.getChildren().remove(rookView);
-                                    gridPane.add(rookView, rookEndCol, row);
-                                    boardCurrent[rookStartCol][row] = "null";
-                                    boardCurrent[rookEndCol][row] = rookPiece;
-
-                                    // Update rook's moved status
-                                    pieces.get(rookPiece).setMoved(true);
-                                } else {
-                                    // Invalid castling, return king to original position
-                                    gridPane.getChildren().remove(selectedPiece);
-                                    gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
-                                    return;
-                                }
-
-                            }
-
-
-                            //doesnt disallow multiple en passant captures with same pawn
-                            //nor if the pawn has already captured.
-                            //TODO: fix
-                            if (globalEnPassant) {
-                                // Determine the position of the pawn to be captured
-                                int capturedPawnRow = typeOfPiece.contains("white") ? row + 1 : row - 1;
-                                int capturedPawnCol = col;
-
-                                // Remove the captured pawn from the board
-                                String capturedPawn = boardCurrent[capturedPawnCol][capturedPawnRow];
-                                boardCurrent[capturedPawnCol][capturedPawnRow] = "null";
-
-                                // Remove the captured pawn's image from the GUI
-                                gridPane.getChildren().remove(imageViewMap.get(capturedPawn));
-                                imageViewMap.remove(capturedPawn);
-
-                                globalEnPassant = false;
-                            }
-
-
-
-                            //check for king
-                            String destinationPiece = boardCurrent[col][row];
-                            if(destinationPiece.contains("king")){
-                                initialPieceCoordinateROW = -1;
-                                initialPieceCoordinateCOL = -1;
-                                selectedPiece = null;
-                                return;
-                            }
-
-                            // move from current position to new spot
-                            gridPane.getChildren().remove(selectedPiece);
-                            gridPane.add(selectedPiece, col, row);
-
-                            // update boardCurrent
-                            String currentPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                            // String destinationPiece = boardCurrent[col][row];
-
-                            //to capture piece.
-                            String toBeRemoved = boardCurrent[col][row];
-                            if (!toBeRemoved.equals("null")) {
-                                gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
-                                imageViewMap.remove(toBeRemoved);
-                            }
-
-                            boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW] = "null";
-                            boardCurrent[col][row] = currentPiece;
-
-                            // check and handle pawn promotion
-                            if (currentPiece.contains("pawn")) {
-                                boolean isWhite = currentPiece.contains("white");
-                                if ((isWhite && row == 0) || (!isWhite && row == 7)) {
-                                    handlePawnPromotion(currentPiece, col, row, isWhite);
-                                }
-                            }
-
-                            // Update piece's moved status
-                            piece.setMoved(true);
-                            switchTurn();
-
-                        }else {
-                            // if move invalid, return to last position
-                            gridPane.getChildren().remove(selectedPiece);
-                            gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
-                        }
-                    } else {
-                        // if move outside the board, return to last position
-                        gridPane.getChildren().remove(selectedPiece);
-                        gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
-                    }
-
-                    // reset initial coordinate
-                    initialPieceCoordinateROW = -1;
-                    initialPieceCoordinateCOL = -1;
-                    // print the current board
-                    printBoardState();
-                    selectedPiece = null; // Reset selected piece
-
-                }
-
-
-            }});
-
-
-
-        Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chess Game");
         primaryStage.show();
@@ -308,7 +315,7 @@ public class ChessGame extends Application {
 
 
         String[] pieceList = {"rook1", "knight1", "bishop1", "king1", "queen1", "bishop2", "knight2", "rook2",
-                "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7", "pawn8"};
+                "pawn0", "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7"};
 
         String[] colors = {"black", "white"};
 
