@@ -6,11 +6,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import java.util.Objects;
 
-public class Piece extends Node {
+public abstract class Piece extends Node {
 
     protected String type; // e.g., "Pawn", "Knight", etc.
     protected String color; // e.g., "White", "Black"
     protected ImageView piece;
+    private boolean hasMoved = false;
 
     public Piece(String type, String color) {
         this.type = type;
@@ -48,16 +49,7 @@ public class Piece extends Node {
 
     public void highlightValidMoves(int startCol, int startRow, StackPane[][] stiles, String[][] boardCurrent, String typeOfPiece) {
 
-        String pieceType = typeOfPiece.replaceAll("\\d", ""); // remove digit
 
-        String color = "";
-        if (pieceType.endsWith("white")) {
-            pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "white"
-            color = "white";
-        } else if (pieceType.endsWith("black")) {
-            pieceType = pieceType.substring(0, pieceType.length() - 5); //  remove "black"
-            color = "black";
-        }
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
 
@@ -98,6 +90,7 @@ public class Piece extends Node {
     }
 
     public boolean isValidMove(int initialPieceCoordinateCOL, int initialPieceCoordinateROW, int col, int row, String[][] boardCurrent) {
+
 
         return switch (this.getType()) {
             case "queen" ->
@@ -144,5 +137,12 @@ public class Piece extends Node {
         }
     }
 
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    public void setMoved(boolean moved) {
+        this.hasMoved = moved;
+    }
 
 }

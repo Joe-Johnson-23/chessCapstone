@@ -36,7 +36,10 @@ public class Pawn extends Piece {
         if (colDiff == 1 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null") &&
                 !boardCurrent[endCol][startRow].equals("null") &&
                 boardCurrent[endCol][startRow].contains(isWhite ? "black" : "white") &&
-                boardCurrent[endCol][startRow].contains("pawn")) {
+                boardCurrent[endCol][startRow].contains("pawn"))
+
+        {
+            ChessGame.globalEnPassant = true;
             return true;
         }
 
