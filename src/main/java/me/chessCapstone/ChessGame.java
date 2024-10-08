@@ -35,8 +35,9 @@ public class ChessGame extends Application {
     //thus need global for now
     int globalCountForPromotion = 2;
 
-    static boolean globalEnPassant = false;
-
+    static boolean lastMoveWasDoublePawnMove = false;
+    static String lastPawnMoved = "";
+    static boolean EnPassantPossible = false;
     /////////////////////////////// GLOBAL VARIABLES ///////////////////////////////
     private Map<String, ImageView> imageViewMap = new HashMap<>();
 
@@ -153,24 +154,33 @@ public class ChessGame extends Application {
                                 }
 
 
-                                //doesnt disallow multiple en passant captures with same pawn
-                                //nor if the pawn has already captured.
-                                //TODO: fix
-                                if (globalEnPassant) {
-                                    // Determine the position of the pawn to be captured
-                                    int capturedPawnRow = typeOfPiece.contains("white") ? row + 1 : row - 1;
-                                    int capturedPawnCol = col;
+                                //check for double pawn move (en passant)
+                                if (pieceType.contains("pawn") && Math.abs(row - initialPieceCoordinateROW) == 2) {
+                                    lastMoveWasDoublePawnMove = true;
+                                    lastPawnMoved = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
 
-                                    // Remove the captured pawn from the board
-                                    String capturedPawn = boardCurrent[capturedPawnCol][capturedPawnRow];
-                                    boardCurrent[capturedPawnCol][capturedPawnRow] = "null";
-
-                                    // Remove the captured pawn's image from the GUI
-                                    gridPane.getChildren().remove(imageViewMap.get(capturedPawn));
-                                    imageViewMap.remove(capturedPawn);
-
-                                    globalEnPassant = false;
+                                }else {
+                                    lastMoveWasDoublePawnMove = false;
                                 }
+
+                                //check for en passant, if possible, remove captured pawn from board and GUI
+                                if (pieceType.contains("pawn") && EnPassantPossible ) {
+
+                                    int capturedPawnRow;
+                                    if (pieceType.contains("white")) {
+                                        capturedPawnRow = row + 1; // White pawn captures upward
+                                    } else {
+                                        capturedPawnRow = row - 1; // Black pawn captures downward
+                                    }
+                                    // Remove the captured pawn from the board
+                                    boardCurrent[capturedPawnRow][col] = "null";
+                                    // Remove the captured pawn's image from the GUI
+                                    gridPane.getChildren().remove(imageViewMap.get(lastPawnMoved));
+                                    imageViewMap.remove(lastPawnMoved);
+
+                                }
+
+
 
 
 
