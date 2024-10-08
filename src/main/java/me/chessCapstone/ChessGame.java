@@ -19,6 +19,7 @@ public class ChessGame extends Application {
     HashMap<String, Piece> pieces = new HashMap<>();
     private StackPane[][] stiles = new StackPane[BOARD_SIZE][BOARD_SIZE];
     private String[][] boardCurrent = new String[BOARD_SIZE][BOARD_SIZE];
+    private ArrayList<Tile> threatenedSquares = new ArrayList<Tile>();
 
 
     private int initialPieceCoordinateROW;
@@ -64,7 +65,9 @@ public class ChessGame extends Application {
                 String typeOfPiece =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
 //              highlightValidMoves(col, row, typeOfPiece);
                 Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-                piece.highlightValidMoves(col, row, stiles, boardCurrent, typeOfPiece);
+                if(piece != null) {
+                    piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
+                }
 
             }
 
@@ -183,6 +186,7 @@ public class ChessGame extends Application {
 
             }
 
+            calculateThreatenedSquares();
 
         });
 
@@ -258,8 +262,6 @@ public class ChessGame extends Application {
 
     private void setUpPieces(GridPane gridPane) {
 
-        //HashMap<String, Piece> pieces = new HashMap<>();
-
         String[] pieceList = {"rook1", "knight1", "bishop1", "king1", "queen1", "bishop2", "knight2", "rook2",
                 "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7", "pawn8"};
 
@@ -267,16 +269,16 @@ public class ChessGame extends Application {
 
         int row = 0, col = 0;
 
-        for(int x = 0; x < colors.length; x++) {
+        for (String color : colors) {
 
-            for(int y = 0; y < pieceList.length; y++) {
+            for (int y = 0; y < pieceList.length; y++) {
 
-                if(col == 8) {
-                    if(row == 1) {
+                if (col == 8) {
+                    if (row == 1) {
                         row = 7;
                         pieceList[3] = "queen1";
                         pieceList[4] = "king1";
-                    } else if(row == 7) {
+                    } else if (row == 7) {
                         row--;
                     } else {
                         row++;
@@ -284,11 +286,11 @@ public class ChessGame extends Application {
                     col = 0;
                 }
 
-                Piece nextPiece = createPiece(pieceList[y], colors[x]);
-                String typeColor = pieceList[y] + colors[x];
-                //pieces.put(typeColor, nextPiece);
+                Piece nextPiece = createPiece(pieceList[y], color);
+                String typeColor = pieceList[y] + color;
                 pieces.put(typeColor, nextPiece);
                 boardCurrent[col][row] = typeColor;
+                assert nextPiece != null;
                 gridPane.add(nextPiece.getPiece(), col, row);
                 imageViewMap.put(typeColor, nextPiece.getPiece());
                 col++;
@@ -369,10 +371,19 @@ public class ChessGame extends Application {
 //        }
 //    }
 
+    private void calculateThreatenedSquares() {
 
+        threatenedSquares.clear();
 
-
-
+        for(int row = 0; row < BOARD_SIZE; row++) {
+            for(int col = 0; col < BOARD_SIZE; col++) {
+                Piece piece = pieces.get(boardCurrent[col][row]);
+                if(piece != null) {
+                    threatenedSquares.addAll(piece.findValidMoves(col, row, boardCurrent));
+                }
+            }
+        }
+    }
 
     private void printBoardState() {
         System.out.println("NEW BOARD");

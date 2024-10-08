@@ -4,6 +4,8 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+
+import java.util.ArrayList;
 import java.util.Objects;
 
 public class Piece extends Node {
@@ -46,18 +48,8 @@ public class Piece extends Node {
         piece.setFitHeight(100);
     }
 
-    public void highlightValidMoves(int startCol, int startRow, StackPane[][] stiles, String[][] boardCurrent, String typeOfPiece) {
+    public void highlightValidMoves(int startCol, int startRow, StackPane[][] stiles, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
 
-        String pieceType = typeOfPiece.replaceAll("\\d", ""); // remove digit
-
-        String color = "";
-        if (pieceType.endsWith("white")) {
-            pieceType = pieceType.substring(0, pieceType.length() - 5); // remove "white"
-            color = "white";
-        } else if (pieceType.endsWith("black")) {
-            pieceType = pieceType.substring(0, pieceType.length() - 5); //  remove "black"
-            color = "black";
-        }
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
 
@@ -88,13 +80,57 @@ public class Piece extends Node {
                         }
                         break;
                     case "king":
-                        if(((King) this).isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((King) this).isValidKingMove(startCol, startRow, col, row, boardCurrent, threatenedSquares)) {
                             stiles[row][col].setStyle("-fx-background-color: PINK;");
                         }
                         break;
                 }
             }
         }
+    }
+
+    public ArrayList<Tile> findValidMoves(int startCol, int startRow, String[][] boardCurrent) {
+
+        ArrayList<Tile> threatenedSquares =  new ArrayList<Tile>();
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+
+                switch(this.getType()) {
+                    case "queen":
+                        if(((Queen) this).isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "bishop":
+                        if(((Bishop) this).isValidBishopMove(startCol, startRow, col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "knight":
+                        if(((Knight) this).isValidKnightMove(startCol, startRow, col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "pawn":
+                        if(((Pawn) this).isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "rook":
+                        if(((Rook) this).isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "king":
+                        if(((King) this).isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                }
+            }
+        }
+        return threatenedSquares;
     }
 
     public boolean isValidMove(int initialPieceCoordinateCOL, int initialPieceCoordinateROW, int col, int row, String[][] boardCurrent) {
@@ -143,6 +179,5 @@ public class Piece extends Node {
             return isWhite ? destinationPiece.contains("black") : destinationPiece.contains("white");
         }
     }
-
 
 }
