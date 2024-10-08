@@ -4,10 +4,12 @@ public class Pawn extends Piece {
 
     public Pawn(String color) {
         super("pawn", color);
+
     }
 
     public boolean isValidPawnMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
         String pawn = boardCurrent[startCol][startRow];
+
         boolean isWhite = pawn.contains("white");
         int direction = isWhite ? -1 : 1; // White pawns move up (-1), black pawns move down (+1)
         int rowDiff = endRow - startRow;
@@ -15,6 +17,7 @@ public class Pawn extends Piece {
 
         //Regular move: 1 square forward
         if (colDiff == 0 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null")) {
+            ChessGame.EnPassantPossible  = false;
             return true;
         }
 
@@ -23,24 +26,29 @@ public class Pawn extends Piece {
                 (isWhite ? startRow == 6 : startRow == 1) &&
                 boardCurrent[endCol][endRow].equals("null") &&
                 boardCurrent[endCol][endRow - direction].equals("null")) {
+            ChessGame.EnPassantPossible  = false;
             return true;
         }
 
         //Capture move: 1 square diagonally
         if (colDiff == 1 && rowDiff == direction && !boardCurrent[endCol][endRow].equals("null") &&
                 !boardCurrent[endCol][endRow].contains(isWhite ? "white" : "black")) {
+            ChessGame.EnPassantPossible  = false;
             return true;
         }
 
-//En passant capture (simplified, doesn't check if the last move was a double pawn push)
-        if (colDiff == 1 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null") &&
-                !boardCurrent[endCol][startRow].equals("null") &&
-                boardCurrent[endCol][startRow].contains(isWhite ? "black" : "white") &&
-                boardCurrent[endCol][startRow].contains("pawn"))
-
-        {
-            ChessGame.globalEnPassant = true;
-            return true;
+//En passant capture
+        if (Math.abs(endCol - startCol) == 1 && boardCurrent[endCol][endRow].equals("null")) {
+            if (endRow == startRow + direction && ChessGame.lastMoveWasDoublePawnMove) {
+                // Check if the last moved pawn is in the correct position
+                if ((color.equals("white") && endRow == 2) || (color.equals("black") && endRow == 5)) {
+                    // The pawn to be captured should be in the same column as the destination
+                    if (boardCurrent[endCol][startRow].equals(ChessGame.lastPawnMoved)) {
+                        ChessGame.EnPassantPossible  = true;
+                        return true; // Valid en passant
+                    }
+                }
+            }
         }
 
 
@@ -48,4 +56,6 @@ public class Pawn extends Piece {
 
         return false;
     }
+
+
 }
