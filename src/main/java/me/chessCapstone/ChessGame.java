@@ -135,10 +135,10 @@ public class ChessGame extends Application {
                     }
 
                     System.out.println(piece);
+                    gridPane.getChildren().remove(selectedPiece);
                     if (validMove) {
 
                         // move
-                        gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, col, row);
                         piece.setCol(col);
                         piece.setRow(row);
@@ -167,7 +167,6 @@ public class ChessGame extends Application {
                         }
                     } else {
                         // if move invalid, return to last position
-                        gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                     }
                 } else {
@@ -232,6 +231,8 @@ public class ChessGame extends Application {
             // add new piece
             gridPane.add(promotedPieceView, col, row);
             boardCurrent[col][row] = newPieceName;
+            promotedPiece.setCol(col);
+            promotedPiece.setRow(row);
             imageViewMap.put(newPieceName, promotedPieceView);
         });
     }
@@ -397,8 +398,6 @@ public class ChessGame extends Application {
                 }
             }
         }
-
-        System.out.println("Threatened squares by White:" + squaresThreatenedByWhite.size());
     }
 
     private void printBoardState() {
