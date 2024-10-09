@@ -89,7 +89,26 @@ public class Piece extends Node {
         }
     }
 
-    public ArrayList<Tile> findValidMoves(int startCol, int startRow, String[][] boardCurrent) {
+    public boolean isValidMove(int initialPieceCoordinateCOL, int initialPieceCoordinateROW, int col, int row, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
+
+        return switch (this.getType()) {
+            case "queen" ->
+                    ((Queen) this).isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+            case "bishop" ->
+                    ((Bishop) this).isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+            case "knight" ->
+                    ((Knight) this).isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+            case "pawn" ->
+                    ((Pawn) this).isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+            case "rook" ->
+                    ((Rook) this).isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+            case "king" ->
+                    ((King) this).isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
+            default -> false;
+        };
+    }
+
+    public ArrayList<Tile> findThreatenedSquares(int startCol, int startRow, String[][] boardCurrent) {
 
         ArrayList<Tile> threatenedSquares =  new ArrayList<Tile>();
 
@@ -113,7 +132,7 @@ public class Piece extends Node {
                         }
                         break;
                     case "pawn":
-                        if(((Pawn) this).isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((Pawn) this).isThreatenedSquare(startCol, startRow, col, row, boardCurrent)) {
                             threatenedSquares.add(new Tile(col, row));
                         }
                         break;
@@ -131,25 +150,6 @@ public class Piece extends Node {
             }
         }
         return threatenedSquares;
-    }
-
-    public boolean isValidMove(int initialPieceCoordinateCOL, int initialPieceCoordinateROW, int col, int row, String[][] boardCurrent) {
-
-        return switch (this.getType()) {
-            case "queen" ->
-                    ((Queen) this).isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-            case "bishop" ->
-                    ((Bishop) this).isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-            case "knight" ->
-                    ((Knight) this).isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-            case "pawn" ->
-                    ((Pawn) this).isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-            case "rook" ->
-                    ((Rook) this).isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-            case "king" ->
-                    ((King) this).isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-            default -> false;
-        };
     }
 
     public boolean isPathClear(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {

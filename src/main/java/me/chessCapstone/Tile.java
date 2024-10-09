@@ -26,4 +26,24 @@ public class Tile {
         this.row = row;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if(this == obj) {
+            return true;
+        }
+
+        if(!(obj instanceof Tile)) {
+            return false;
+        }
+
+        Tile tile = (Tile) obj;
+        return this.row == tile.row && this.col == tile.col;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = Integer.hashCode(row);
+        result = 31 * result + Integer.hashCode(col);
+        return result;
+    }
 }

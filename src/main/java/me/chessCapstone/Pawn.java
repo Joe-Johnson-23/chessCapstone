@@ -40,9 +40,17 @@ public class Pawn extends Piece {
             return true;
         }
 
-
-
-
         return false;
+
+    }
+
+    public boolean isThreatenedSquare(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+        boolean isWhite = this.getColor().equals("white");
+        int direction = isWhite ? -1 : 1; // White pawns move up (-1), black pawns move down (+1)
+        int rowDiff = endRow - startRow;
+        int colDiff = Math.abs(endCol - startCol);
+
+        return colDiff == 1 && rowDiff == direction &&
+                !boardCurrent[endCol][endRow].contains(isWhite ? "white" : "black");
     }
 }

@@ -19,7 +19,8 @@ public class ChessGame extends Application {
     HashMap<String, Piece> pieces = new HashMap<>();
     private StackPane[][] stiles = new StackPane[BOARD_SIZE][BOARD_SIZE];
     private String[][] boardCurrent = new String[BOARD_SIZE][BOARD_SIZE];
-    private ArrayList<Tile> threatenedSquares = new ArrayList<Tile>();
+    private ArrayList<Tile> squaresThreatenedByWhite = new ArrayList<>();
+    private ArrayList<Tile> squaresThreatenedByBlack = new ArrayList<>();
 
 
     private int initialPieceCoordinateROW;
@@ -55,6 +56,8 @@ public class ChessGame extends Application {
 
         gridPane.setOnMousePressed(event -> {
 
+            calculateThreatenedSquares();
+
             int col = (int) (event.getSceneX() / TILE_SIZE);
             int row = (int) (event.getSceneY() / TILE_SIZE);
             initialPieceCoordinateCOL = col;
@@ -66,7 +69,11 @@ public class ChessGame extends Application {
 //              highlightValidMoves(col, row, typeOfPiece);
                 Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
                 if(piece != null) {
-                    piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
+                    if(piece.getColor().equals("white")) {
+                        piece.highlightValidMoves(col, row, stiles, boardCurrent, squaresThreatenedByBlack);
+                    } else {
+                        piece.highlightValidMoves(col, row, stiles, boardCurrent, squaresThreatenedByWhite);
+                    }
                 }
 
             }
@@ -131,8 +138,16 @@ public class ChessGame extends Application {
 
                     Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
 
+                    boolean validMove;
+
+                    if(piece.getColor().equals("white")) {
+                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, squaresThreatenedByBlack);
+                    } else {
+                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, squaresThreatenedByWhite);
+                    }
+
                     System.out.println(piece);
-                    if (piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent)) {
+                    if (validMove) {
 
                         // move
                         gridPane.getChildren().remove(selectedPiece);
@@ -185,8 +200,6 @@ public class ChessGame extends Application {
                 selectedPiece = null; // Reset selected piece
 
             }
-
-            calculateThreatenedSquares();
 
         });
 
@@ -373,16 +386,27 @@ public class ChessGame extends Application {
 
     private void calculateThreatenedSquares() {
 
-        threatenedSquares.clear();
+        squaresThreatenedByWhite.clear();
+        squaresThreatenedByBlack.clear();
 
         for(int row = 0; row < BOARD_SIZE; row++) {
             for(int col = 0; col < BOARD_SIZE; col++) {
                 Piece piece = pieces.get(boardCurrent[col][row]);
                 if(piece != null) {
-                    threatenedSquares.addAll(piece.findValidMoves(col, row, boardCurrent));
+                    if(piece.getColor().equals("white")) {
+                        squaresThreatenedByWhite.addAll(piece.findThreatenedSquares(col, row, boardCurrent));
+                        Set<Tile> set = new HashSet<>(squaresThreatenedByWhite);
+                        squaresThreatenedByWhite = new ArrayList<>(set);
+                    } else {
+                        squaresThreatenedByBlack.addAll(piece.findThreatenedSquares(col, row, boardCurrent));
+                        Set<Tile> set = new HashSet<>(squaresThreatenedByBlack);
+                        squaresThreatenedByBlack = new ArrayList<>(set);
+                    }
                 }
             }
         }
+
+        System.out.println("Threatened squares by White:" + squaresThreatenedByWhite.size());
     }
 
     private void printBoardState() {
