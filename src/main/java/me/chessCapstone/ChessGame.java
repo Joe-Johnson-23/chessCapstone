@@ -64,8 +64,8 @@ public class ChessGame extends Application {
             if(selectedPiece == null) {
                 selectedPiece = imageViewMap.get(boardCurrent[col][row]);
                 Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-                Piece playerKing = null;
-                ArrayList<Tile> threatenedSquares = null;
+                Piece playerKing;
+                ArrayList<Tile> threatenedSquares;
 
                 if(piece != null && piece.getColor().equals("white")) {
                     playerKing = pieces.get("king1white");
@@ -92,8 +92,8 @@ public class ChessGame extends Application {
                 selectedPiece.setLayoutY(0);
                 boolean validMove = false;
                 Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-                Piece playerKing = null;
-                ArrayList<Tile> threatenedSquares = null;
+                Piece playerKing;
+                ArrayList<Tile> threatenedSquares;
 
                 if (piece != null && piece.getColor().equals("white")) {
                     playerKing = pieces.get("king1white");
@@ -325,7 +325,6 @@ public class ChessGame extends Application {
             default -> null;
         };
     }
-
 
     private void resetTileColor() {
         for (int row = 0; row < BOARD_SIZE; row++) {
