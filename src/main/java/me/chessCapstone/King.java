@@ -8,9 +8,9 @@ public class King extends Piece {
         super("king", color);
     }
 
-    public boolean isValidKingMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
-        int colDiff = Math.abs(endCol - startCol);
-        int rowDiff = Math.abs(endRow - startRow);
+    public boolean isValidKingMove(int endCol, int endRow, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
+        int colDiff = Math.abs(endCol - getCol());
+        int rowDiff = Math.abs(endRow - getRow());
 
         if(threatenedSquares != null) {
             for(Tile tile : threatenedSquares) {
@@ -23,7 +23,7 @@ public class King extends Piece {
         if (colDiff <= 1 && rowDiff <= 1) {
 
             String destinationPiece = boardCurrent[endCol][endRow];
-            String currentPiece = boardCurrent[startCol][startRow];
+            String currentPiece = boardCurrent[getCol()][getRow()];
             return destinationPiece.equals("null") ||
                     (!destinationPiece.contains(currentPiece.contains("white") ? "white" : "black"));
         }

@@ -76,9 +76,9 @@ public class ChessGame extends Application {
                 }
 
                 if(piece != null && !((King) playerKing).isInCheck(threatenedSquares)) {
-                    piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
+                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
                 } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
-                    piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
+                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
                 }
 
             }
@@ -129,13 +129,14 @@ public class ChessGame extends Application {
                     }
 
                     if (!((King) playerKing).isInCheck(threatenedSquares)) {
-                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
+                        validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
                     } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
-                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
+                        validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
                     }
 
                     System.out.println(piece);
                     gridPane.getChildren().remove(selectedPiece);
+
                     if (validMove) {
 
                         // move
@@ -386,11 +387,11 @@ public class ChessGame extends Application {
                 Piece piece = pieces.get(boardCurrent[col][row]);
                 if(piece != null) {
                     if(piece.getColor().equals("white")) {
-                        squaresThreatenedByWhite.addAll(piece.findThreatenedSquares(col, row, boardCurrent));
+                        squaresThreatenedByWhite.addAll(piece.findThreatenedSquares(boardCurrent));
                         Set<Tile> set = new HashSet<>(squaresThreatenedByWhite);
                         squaresThreatenedByWhite = new ArrayList<>(set);
                     } else {
-                        squaresThreatenedByBlack.addAll(piece.findThreatenedSquares(col, row, boardCurrent));
+                        squaresThreatenedByBlack.addAll(piece.findThreatenedSquares(boardCurrent));
                         Set<Tile> set = new HashSet<>(squaresThreatenedByBlack);
                         squaresThreatenedByBlack = new ArrayList<>(set);
                     }
