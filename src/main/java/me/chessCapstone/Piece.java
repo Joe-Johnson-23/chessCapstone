@@ -13,6 +13,7 @@ public class Piece extends Node {
     protected String type; // e.g., "Pawn", "Knight", etc.
     protected String color; // e.g., "White", "Black"
     protected ImageView piece;
+    protected int col, row;
 
     public Piece(String type, String color) {
         this.type = type;
@@ -38,6 +39,22 @@ public class Piece extends Node {
 
     public ImageView getPiece() {
         return piece;
+    }
+
+    public int getCol() {
+        return col;
+    }
+
+    public void setCol(int col) {
+        this.col = col;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
     }
 
     public void setPiece() {
@@ -142,7 +159,7 @@ public class Piece extends Node {
                         }
                         break;
                     case "king":
-                        if(((King) this).isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((King) this).isValidKingMove(startCol, startRow, col, row, boardCurrent, null)) {
                             threatenedSquares.add(new Tile(col, row));
                         }
                         break;

@@ -56,24 +56,27 @@ public class ChessGame extends Application {
 
         gridPane.setOnMousePressed(event -> {
 
-            calculateThreatenedSquares();
-
             int col = (int) (event.getSceneX() / TILE_SIZE);
             int row = (int) (event.getSceneY() / TILE_SIZE);
             initialPieceCoordinateCOL = col;
             initialPieceCoordinateROW = row;
+
             if(selectedPiece == null) {
                 selectedPiece = imageViewMap.get(boardCurrent[col][row]);
-
-                String typeOfPiece =  boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-//              highlightValidMoves(col, row, typeOfPiece);
                 Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-                if(piece != null) {
-                    if(piece.getColor().equals("white")) {
-                        piece.highlightValidMoves(col, row, stiles, boardCurrent, squaresThreatenedByBlack);
-                    } else {
-                        piece.highlightValidMoves(col, row, stiles, boardCurrent, squaresThreatenedByWhite);
-                    }
+                Piece playerKing = null;
+                ArrayList<Tile> threatenedSquares = null;
+
+                if(piece != null && piece.getColor().equals("white")) {
+                    playerKing = pieces.get("king1white");
+                    threatenedSquares = squaresThreatenedByBlack;
+                } else {
+                    playerKing = pieces.get("king1black");
+                    threatenedSquares = squaresThreatenedByWhite;
+                }
+
+                if(!((King) playerKing).isInCheck(threatenedSquares)) {
+                    piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
                 }
 
             }
@@ -85,6 +88,18 @@ public class ChessGame extends Application {
 
                 selectedPiece.setLayoutX(0);
                 selectedPiece.setLayoutY(0);
+                boolean validMove = false;
+                Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
+                Piece playerKing = null;
+                ArrayList<Tile> threatenedSquares = null;
+
+                if(piece != null && piece.getColor().equals("white")) {
+                    playerKing = pieces.get("king1white");
+                    threatenedSquares = squaresThreatenedByBlack;
+                } else {
+                    playerKing = pieces.get("king1black");
+                    threatenedSquares = squaresThreatenedByWhite;
+                }
 
                 resetTileColor();
 
@@ -111,39 +126,10 @@ public class ChessGame extends Application {
                         color = "black";
                     }
 
-                    boolean isValidMove = false;
-                    //match the position between a non-digit and a digit without consuming any characters.
-//                    switch (typeOfPiece.split("(?<=\\D)(?=\\d)")[0]) {
-//                    switch (pieceType) {
-//                        case "queen":
-//                            isValidMove = isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-//                            break;
-//                        case "bishop":
-//                            isValidMove = isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-//                            break;
-//                        case "knight":
-//                            isValidMove = isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-//                            break;
-//                        case "pawn":
-//                            isValidMove = isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-//                            break;
-//                        case "rook":
-//                            isValidMove = isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-//                            break;
-//                        case "king":
-//                            isValidMove = isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
-//                            break;
-//                        // Add cases for other piece types as needed
-//                    }
-
-                    Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-
-                    boolean validMove;
-
-                    if(piece.getColor().equals("white")) {
-                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, squaresThreatenedByBlack);
-                    } else {
-                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, squaresThreatenedByWhite);
+                    if(!((King) playerKing).isInCheck(threatenedSquares)) {
+                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
+                    } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece))
+                        validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
                     }
 
                     System.out.println(piece);
@@ -152,6 +138,8 @@ public class ChessGame extends Application {
                         // move
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, col, row);
+                        piece.setCol(col);
+                        piece.setRow(row);
 
                         // update boardCurrent
                         String currentPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
@@ -197,14 +185,14 @@ public class ChessGame extends Application {
                 initialPieceCoordinateROW = 0;
                 initialPieceCoordinateCOL = 0;
 
-                selectedPiece = null; // Reset selected piece
+                calculateThreatenedSquares();
 
-            }
+                selectedPiece = null; // Reset selected piece
 
         });
 
 
-
+        calculateThreatenedSquares();
         Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chess Game");
@@ -304,6 +292,8 @@ public class ChessGame extends Application {
                 pieces.put(typeColor, nextPiece);
                 boardCurrent[col][row] = typeColor;
                 assert nextPiece != null;
+                nextPiece.setCol(col);
+                nextPiece.setRow(row);
                 gridPane.add(nextPiece.getPiece(), col, row);
                 imageViewMap.put(typeColor, nextPiece.getPiece());
                 col++;
