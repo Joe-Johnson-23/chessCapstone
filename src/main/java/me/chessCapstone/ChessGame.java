@@ -75,7 +75,9 @@ public class ChessGame extends Application {
                     threatenedSquares = squaresThreatenedByWhite;
                 }
 
-                if(!((King) playerKing).isInCheck(threatenedSquares)) {
+                if(piece != null && !((King) playerKing).isInCheck(threatenedSquares)) {
+                    piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
+                } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
                     piece.highlightValidMoves(col, row, stiles, boardCurrent, threatenedSquares);
                 }
 
@@ -93,7 +95,7 @@ public class ChessGame extends Application {
                 Piece playerKing = null;
                 ArrayList<Tile> threatenedSquares = null;
 
-                if(piece != null && piece.getColor().equals("white")) {
+                if (piece != null && piece.getColor().equals("white")) {
                     playerKing = pieces.get("king1white");
                     threatenedSquares = squaresThreatenedByBlack;
                 } else {
@@ -126,9 +128,9 @@ public class ChessGame extends Application {
                         color = "black";
                     }
 
-                    if(!((King) playerKing).isInCheck(threatenedSquares)) {
+                    if (!((King) playerKing).isInCheck(threatenedSquares)) {
                         validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
-                    } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece))
+                    } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
                         validMove = piece.isValidMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent, threatenedSquares);
                     }
 
@@ -163,7 +165,7 @@ public class ChessGame extends Application {
                                 handlePawnPromotion(currentPiece, col, row, isWhite);
                             }
                         }
-                    }else {
+                    } else {
                         // if move invalid, return to last position
                         gridPane.getChildren().remove(selectedPiece);
                         gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
@@ -188,7 +190,7 @@ public class ChessGame extends Application {
                 calculateThreatenedSquares();
 
                 selectedPiece = null; // Reset selected piece
-
+            }
         });
 
 
