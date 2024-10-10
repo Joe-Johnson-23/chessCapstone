@@ -7,15 +7,15 @@ public class Rook extends Piece {
     }
 
 
-    public boolean isValidRookMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
+    public boolean isValidRookMove(int endCol, int endRow, String[][] boardCurrent) {
 
         // 수직 이동
-        if (startCol == endCol && startRow != endRow) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        if (getCol() == endCol && getRow() != endRow) {
+            return isPathClear(endCol, endRow, boardCurrent);
         }
         // 수평 이동
-        else if (startRow == endRow && startCol != endCol) {
-            return isPathClear(startCol, startRow, endCol, endRow, boardCurrent);
+        else if (getRow() == endRow && getCol() != endCol) {
+            return isPathClear(endCol, endRow, boardCurrent);
         }
 
         return false;
