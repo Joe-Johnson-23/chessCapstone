@@ -121,7 +121,7 @@ public class ChessGame extends Application {
                 selectedPiece.setTranslateY(0);
 
                 String typeOfPiece = boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW];
-                //checking whose turn, in case of wrong click
+                //checking whose turn
                 if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
 
                     if (selectedPiece != null) {
@@ -160,6 +160,7 @@ public class ChessGame extends Application {
                             System.out.println(piece);
 
                             //checks if any possible move is valid in regards to check
+                            // calls the Piece's isValidMove method inside the method
                             validMove = isValidMove(piece, col, row);
 
                             if (validMove) {
@@ -265,7 +266,7 @@ public class ChessGame extends Application {
                                 calculateThreatenedSquares();
 
                                 if (isCheckmate()) {
-                                    // Handle checkmate (e.g., end the game, display a message)
+
                                     System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
                                 }
                             }else {
