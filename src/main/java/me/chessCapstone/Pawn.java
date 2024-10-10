@@ -36,12 +36,12 @@ public class Pawn extends Piece {
         }
 
 //En passant capture
-        if (Math.abs(endCol - startCol) == 1 && boardCurrent[endCol][endRow].equals("null")) {
-            if (endRow == startRow + direction && ChessGame.lastMoveWasDoublePawnMove) {
+        if (Math.abs(endCol - getCol()) == 1 && boardCurrent[endCol][endRow].equals("null")) {
+            if (endRow == getRow() + direction && ChessGame.lastMoveWasDoublePawnMove) {
                 // Check if the last moved pawn is in the correct position
                 if ((color.equals("white") && endRow == 2) || (color.equals("black") && endRow == 5)) {
                     // The pawn to be captured should be in the same column as the destination
-                    if (boardCurrent[endCol][startRow].equals(ChessGame.lastPawnMoved)) {
+                    if (boardCurrent[endCol][getRow()].equals(ChessGame.lastPawnMoved)) {
                         ChessGame.EnPassantPossible  = true;
                         return true; // Valid en passant
                     }

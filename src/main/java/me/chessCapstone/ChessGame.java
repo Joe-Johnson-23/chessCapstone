@@ -66,28 +66,11 @@ public class ChessGame extends Application {
             initialPieceCoordinateCOL = col;
             initialPieceCoordinateROW = row;
 
-//            if(selectedPiece == null) {
-//                selectedPiece = imageViewMap.get(boardCurrent[col][row]);
-//                Piece piece =  pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-//                Piece playerKing;
-//                ArrayList<Tile> threatenedSquares;
-//
-//                if(piece != null && piece.getColor().equals("white")) {
-//                    playerKing = pieces.get("king1white");
-//                    threatenedSquares = squaresThreatenedByBlack;
-//                } else {
-//                    playerKing = pieces.get("king1black");
-//                    threatenedSquares = squaresThreatenedByWhite;
-//                }
-//
-//                if(piece != null && !((King) playerKing).isInCheck(threatenedSquares)) {
-//                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
-//                } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
-//                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
-//                }
-
             String typeOfPiece = boardCurrent[col][row];
             Piece piece = pieces.get(typeOfPiece);
+            Piece playerKing;
+            ArrayList<Tile> threatenedSquares;
+            calculateThreatenedSquares();
 
             if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
                 selectedPiece = imageViewMap.get(typeOfPiece);
@@ -99,10 +82,19 @@ public class ChessGame extends Application {
                 }
 
                 if(isWhiteTurn) {
-                    piece.highlightValidMoves(stiles, boardCurrent, squaresThreatenedByBlack);
+                    playerKing = pieces.get("king1white");
+                    threatenedSquares = squaresThreatenedByBlack;
                 } else {
-                    piece.highlightValidMoves(stiles, boardCurrent, squaresThreatenedByWhite);
+                    playerKing = pieces.get("king1black");
+                    threatenedSquares = squaresThreatenedByWhite;
                 }
+
+                if(!((King) playerKing).isInCheck(threatenedSquares)) {
+                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
+                } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
+                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
+                }
+
             }
         });
 
@@ -132,8 +124,8 @@ public class ChessGame extends Application {
 
                 selectedPiece.setLayoutX(0);
                 selectedPiece.setLayoutY(0);
-                boolean validMove = false;
                 Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
+                boolean validMove = false;
                 Piece playerKing;
                 ArrayList<Tile> threatenedSquares;
 
@@ -144,6 +136,7 @@ public class ChessGame extends Application {
                     playerKing = pieces.get("king1black");
                     threatenedSquares = squaresThreatenedByWhite;
                 }
+
 
                         resetTileColor();
 
@@ -162,13 +155,13 @@ public class ChessGame extends Application {
 
                             System.out.println(piece);
 
-//                            if (!((King) playerKing).isInCheck(threatenedSquares)) {
-//                                validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
-//                            } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
-//                                validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
-//                            }
+                            if (!((King) playerKing).isInCheck(threatenedSquares)) {
+                                validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
+                            } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
+                                validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
+                            }
 
-                            if (piece.isValidMove(col, row, boardCurrent)) {
+                            if (validMove) {
                                 // Check for castling
                                 if (pieceType.contains("king") && Math.abs(col - initialPieceCoordinateCOL) == 2) {
                                     if (isCastlingValid(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row)) {
@@ -294,8 +287,6 @@ public class ChessGame extends Application {
             }
         });
 
-
-        calculateThreatenedSquares();
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chess Game");
         primaryStage.show();
@@ -342,8 +333,29 @@ public class ChessGame extends Application {
         });
     }
 
+    private void calculateThreatenedSquares() {
 
+        squaresThreatenedByWhite.clear();
+        squaresThreatenedByBlack.clear();
 
+        for(int row = 0; row < BOARD_SIZE; row++) {
+            for(int col = 0; col < BOARD_SIZE; col++) {
+                Piece piece = pieces.get(boardCurrent[col][row]);
+                if(piece != null) {
+                    if(piece.getColor().equals("white")) {
+                        squaresThreatenedByWhite.addAll(piece.findThreatenedSquares(boardCurrent));
+                        Set<Tile> set = new HashSet<>(squaresThreatenedByWhite);
+                        squaresThreatenedByWhite = new ArrayList<>(set);
+                    } else {
+                        squaresThreatenedByBlack.addAll(piece.findThreatenedSquares(boardCurrent));
+                        Set<Tile> set = new HashSet<>(squaresThreatenedByBlack);
+                        squaresThreatenedByBlack = new ArrayList<>(set);
+                    }
+                }
+            }
+        }
+        System.out.println("Squares threatened by White: " + squaresThreatenedByWhite.size());
+    }
 
     private void setupBoard(GridPane gridPane) {
 

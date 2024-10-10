@@ -40,18 +40,14 @@ public class King extends Piece {
     }
 
     @Override
-    public boolean isValidMove(int startCol, int startRow, int endCol, int endRow, String[][] board) {
+    public boolean isValidMove(int endCol, int endRow, String[][] board, ArrayList<Tile> threatenedSquares) {
         // Check for regular king move
-        if (Math.abs(endCol - startCol) <= 1 && Math.abs(endRow - startRow) <= 1) {
-            return super.isValidMove(startCol, startRow, endCol, endRow, board);
+        if (Math.abs(endCol - getCol()) <= 1 && Math.abs(endRow - getRow()) <= 1) {
+            return super.isValidMove(endCol, endRow, board, threatenedSquares);
         }
 
         // Check for castling
-        if (!hasMoved() && startRow == endRow && Math.abs(endCol - startCol) == 2) {
-            return true; // The actual validation will be done in the ChessGame class
-        }
-
-        return false;
+        return !hasMoved() && getRow() == endRow && Math.abs(endCol - getCol()) == 2; // The actual validation will be done in the ChessGame class
     }
 
 
