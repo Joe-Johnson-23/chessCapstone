@@ -42,6 +42,8 @@ public class ChessGame extends Application {
     static boolean EnPassantPossible = false;
     /////////////////////////////// GLOBAL VARIABLES ///////////////////////////////
     private Map<String, ImageView> imageViewMap = new HashMap<>();
+    private King whiteKing;
+    private King blackKing;
 
     @Override
     public void start(Stage primaryStage) {
@@ -59,6 +61,8 @@ public class ChessGame extends Application {
             }
         }
 
+        //just to initialize kings to their respective variables in the boardCurrent
+        initializeGame();
 
         gridPane.setOnMousePressed(event -> {
             int col = (int) (event.getSceneX() / TILE_SIZE);
@@ -122,20 +126,20 @@ public class ChessGame extends Application {
 
                     if (selectedPiece != null) {
 
-                selectedPiece.setLayoutX(0);
-                selectedPiece.setLayoutY(0);
-                Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
-                boolean validMove = false;
-                Piece playerKing;
-                ArrayList<Tile> threatenedSquares;
+                        selectedPiece.setLayoutX(0);
+                        selectedPiece.setLayoutY(0);
+                        Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
+                        boolean validMove = false;
+                        Piece playerKing;
+                        ArrayList<Tile> threatenedSquares;
 
-                if (piece != null && piece.getColor().equals("white")) {
-                    playerKing = pieces.get("king1white");
-                    threatenedSquares = squaresThreatenedByBlack;
-                } else {
-                    playerKing = pieces.get("king1black");
-                    threatenedSquares = squaresThreatenedByWhite;
-                }
+                        if (piece != null && piece.getColor().equals("white")) {
+                            playerKing = pieces.get("king1white");
+                            threatenedSquares = squaresThreatenedByBlack;
+                        } else {
+                            playerKing = pieces.get("king1black");
+                            threatenedSquares = squaresThreatenedByWhite;
+                        }
 
 
                         resetTileColor();
@@ -155,11 +159,8 @@ public class ChessGame extends Application {
 
                             System.out.println(piece);
 
-                            if (!((King) playerKing).isInCheck(threatenedSquares)) {
-                                validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
-                            } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
-                                validMove = piece.isValidMove(col, row, boardCurrent, threatenedSquares);
-                            }
+                            //checks if any possible move is valid in regards to check
+                            validMove = isValidMove(piece, col, row);
 
                             if (validMove) {
                                 // Check for castling
@@ -261,6 +262,12 @@ public class ChessGame extends Application {
                                 piece.setMoved(true);
                                 switchTurn();
 
+                                calculateThreatenedSquares();
+
+                                if (isCheckmate()) {
+                                    // Handle checkmate (e.g., end the game, display a message)
+                                    System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
+                                }
                             }else {
                                 // if move invalid, return to last position
                                 gridPane.getChildren().remove(selectedPiece);
@@ -319,8 +326,6 @@ public class ChessGame extends Application {
             ImageView promotedPieceView = promotedPiece.getPiece();
 
 
-            //FIXED problem
-
             pieces.put(promotedPiece.getType() +globalCountForPromotion+ newColor, promotedPiece);
 
 
@@ -334,27 +339,22 @@ public class ChessGame extends Application {
     }
 
     private void calculateThreatenedSquares() {
-
         squaresThreatenedByWhite.clear();
         squaresThreatenedByBlack.clear();
 
-        for(int row = 0; row < BOARD_SIZE; row++) {
-            for(int col = 0; col < BOARD_SIZE; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 Piece piece = pieces.get(boardCurrent[col][row]);
-                if(piece != null) {
-                    if(piece.getColor().equals("white")) {
-                        squaresThreatenedByWhite.addAll(piece.findThreatenedSquares(boardCurrent));
-                        Set<Tile> set = new HashSet<>(squaresThreatenedByWhite);
-                        squaresThreatenedByWhite = new ArrayList<>(set);
+                if (piece != null) {
+                    ArrayList<Tile> threatenedSquares = piece.findThreatenedSquares(boardCurrent);
+                    if (piece.getColor().equals("white")) {
+                        squaresThreatenedByWhite.addAll(threatenedSquares);
                     } else {
-                        squaresThreatenedByBlack.addAll(piece.findThreatenedSquares(boardCurrent));
-                        Set<Tile> set = new HashSet<>(squaresThreatenedByBlack);
-                        squaresThreatenedByBlack = new ArrayList<>(set);
+                        squaresThreatenedByBlack.addAll(threatenedSquares);
                     }
                 }
             }
         }
-        System.out.println("Squares threatened by White: " + squaresThreatenedByWhite.size());
     }
 
     private void setupBoard(GridPane gridPane) {
@@ -498,8 +498,66 @@ public class ChessGame extends Application {
         return true;
     }
 
+    private void initializeGame() {
+
+        whiteKing = (King) pieces.get("king1white");
+        blackKing = (King) pieces.get("king1black");
+        calculateThreatenedSquares();
+    }
+
+    private boolean isValidMove(Piece piece, int endCol, int endRow) {
+        int startCol = piece.getCol();
+        int startRow = piece.getRow();
+
+        //Store the original state
+        String movingPiece = boardCurrent[startCol][startRow];
+        String capturedPiece = boardCurrent[endCol][endRow];
+
+        //Simulate  move
+        boardCurrent[endCol][endRow] = movingPiece;
+        boardCurrent[startCol][startRow] = "null";
+        piece.setCol(endCol);
+        piece.setRow(endRow);
+
+        calculateThreatenedSquares();
+
+        //Check for check
+        boolean kingInCheck = (isWhiteTurn ? whiteKing : blackKing).isInCheck(
+                isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite);
+
+        //Revert move
+        boardCurrent[startCol][startRow] = movingPiece;
+        boardCurrent[endCol][endRow] = capturedPiece;
+        piece.setCol(startCol);
+        piece.setRow(startRow);
 
 
+        calculateThreatenedSquares();
+
+        return !kingInCheck && piece.isValidMove(endCol, endRow, boardCurrent,
+                isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite);
+    }
+
+    private boolean isCheckmate() {
+        King currentKing = isWhiteTurn ? whiteKing : blackKing;
+        if (!currentKing.isInCheck(isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite)) {
+            return false;
+        }
+
+        //Check all possible moves for all pieces
+        for (Piece piece : pieces.values()) {
+            if (piece.getColor().equals(isWhiteTurn ? "white" : "black")) {
+                for (int col = 0; col < BOARD_SIZE; col++) {
+                    for (int row = 0; row < BOARD_SIZE; row++) {
+                        if (isValidMove(piece, col, row)) {
+                            return false; //found move, not checkmate
+                        }
+                    }
+                }
+            }
+        }
+        return true; //it's checkmate
+    }
 
     public static void main(String[] args) {
         try {
