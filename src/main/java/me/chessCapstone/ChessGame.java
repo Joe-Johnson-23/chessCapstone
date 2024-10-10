@@ -85,6 +85,7 @@ public class ChessGame extends Application {
 //                } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
 //                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
 //                }
+
             String typeOfPiece = boardCurrent[col][row];
             Piece piece = pieces.get(typeOfPiece);
 
@@ -96,7 +97,12 @@ public class ChessGame extends Application {
                     // Bring the selected piece to the front
                     selectedPiece.toFront();
                 }
-                piece.highlightValidMoves(stiles, boardCurrent);
+
+                if(isWhiteTurn) {
+                    piece.highlightValidMoves(stiles, boardCurrent, squaresThreatenedByBlack);
+                } else {
+                    piece.highlightValidMoves(stiles, boardCurrent, squaresThreatenedByWhite);
+                }
             }
         });
 
@@ -153,9 +159,6 @@ public class ChessGame extends Application {
                             // check if the move is valid
 
                             String pieceType = typeOfPiece.replaceAll("\\d", ""); // rmove digit
-
-
-                            Piece piece = pieces.get(boardCurrent[initialPieceCoordinateCOL][initialPieceCoordinateROW]);
 
                             System.out.println(piece);
 
