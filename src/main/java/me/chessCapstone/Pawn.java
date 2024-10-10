@@ -4,16 +4,14 @@ public class Pawn extends Piece {
 
     public Pawn(String color) {
         super("pawn", color);
-
     }
 
-    public boolean isValidPawnMove(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        String pawn = boardCurrent[startCol][startRow];
-
+    public boolean isValidPawnMove(int endCol, int endRow, String[][] boardCurrent) {
+        String pawn = boardCurrent[getCol()][getRow()];
         boolean isWhite = pawn.contains("white");
         int direction = isWhite ? -1 : 1; // White pawns move up (-1), black pawns move down (+1)
-        int rowDiff = endRow - startRow;
-        int colDiff = Math.abs(endCol - startCol);
+        int rowDiff = endRow - getRow();
+        int colDiff = Math.abs(endCol - getCol());
 
         //Regular move: 1 square forward
         if (colDiff == 0 && rowDiff == direction && boardCurrent[endCol][endRow].equals("null")) {
@@ -23,7 +21,7 @@ public class Pawn extends Piece {
 
         //First move: option to move 2 squares forward
         if (colDiff == 0 && rowDiff == 2 * direction &&
-                (isWhite ? startRow == 6 : startRow == 1) &&
+                (isWhite ? getRow() == 6 : getRow() == 1) &&
                 boardCurrent[endCol][endRow].equals("null") &&
                 boardCurrent[endCol][endRow - direction].equals("null")) {
             ChessGame.EnPassantPossible  = false;
@@ -51,10 +49,18 @@ public class Pawn extends Piece {
             }
         }
 
-
-
-
         return false;
+
+    }
+
+    public boolean isThreatenedSquare(int endCol, int endRow, String[][] boardCurrent) {
+        boolean isWhite = this.getColor().equals("white");
+        int direction = isWhite ? -1 : 1; // White pawns move up (-1), black pawns move down (+1)
+        int rowDiff = endRow - getRow();
+        int colDiff = Math.abs(endCol - getCol());
+
+        return colDiff == 1 && rowDiff == direction &&
+                !boardCurrent[endCol][endRow].contains(isWhite ? "white" : "black");
     }
 
 

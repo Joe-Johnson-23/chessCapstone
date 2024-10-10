@@ -4,6 +4,8 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+
+import java.util.ArrayList;
 import java.util.Objects;
 
 public abstract class Piece extends Node {
@@ -12,6 +14,7 @@ public abstract class Piece extends Node {
     protected String color; // e.g., "White", "Black"
     protected ImageView piece;
     private boolean hasMoved = false;
+    protected int col, row;
 
     public Piece(String type, String color) {
         this.type = type;
@@ -39,6 +42,22 @@ public abstract class Piece extends Node {
         return piece;
     }
 
+    public int getCol() {
+        return col;
+    }
+
+    public void setCol(int col) {
+        this.col = col;
+    }
+
+    public int getRow() {
+        return row;
+    }
+
+    public void setRow(int row) {
+        this.row = row;
+    }
+
     public void setPiece() {
         String path = "/pngPiece/" + getColor() + "-" + getType() + ".png";
         Image image = new Image(Objects.requireNonNull(getClass().getResourceAsStream(path)));
@@ -47,7 +66,7 @@ public abstract class Piece extends Node {
         piece.setFitHeight(100);
     }
 
-    public void highlightValidMoves(int startCol, int startRow, StackPane[][] stiles, String[][] boardCurrent, String typeOfPiece) {
+    public void highlightValidMoves(StackPane[][] stiles, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
 
 
         for (int row = 0; row < 8; row++) {
@@ -55,32 +74,32 @@ public abstract class Piece extends Node {
 
                 switch(this.getType()) {
                     case "queen":
-                        if(((Queen) this).isValidQueenMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((Queen) this).isValidQueenMove(col, row, boardCurrent)) {
                             stiles[row][col].setStyle("-fx-background-color: LIMEGREEN;");
                         }
                         break;
                     case "bishop":
-                        if(((Bishop) this).isValidBishopMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((Bishop) this).isValidBishopMove(col, row, boardCurrent)) {
                             stiles[row][col].setStyle("-fx-background-color: RED;");
                         }
                         break;
                     case "knight":
-                        if(((Knight) this).isValidKnightMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((Knight) this).isValidKnightMove(col, row, boardCurrent)) {
                             stiles[row][col].setStyle("-fx-background-color: BLUE;");
                         }
                         break;
                     case "pawn":
-                        if(((Pawn) this).isValidPawnMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((Pawn) this).isValidPawnMove(col, row, boardCurrent)) {
                             stiles[row][col].setStyle("-fx-background-color: PURPLE;");
                         }
                         break;
                     case "rook":
-                        if(((Rook) this).isValidRookMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((Rook) this).isValidRookMove(col, row, boardCurrent)) {
                             stiles[row][col].setStyle("-fx-background-color: YELLOW;");
                         }
                         break;
                     case "king":
-                        if(((King) this).isValidKingMove(startCol, startRow, col, row, boardCurrent)) {
+                        if(((King) this).isValidKingMove(col, row, boardCurrent, threatenedSquares)) {
                             stiles[row][col].setStyle("-fx-background-color: PINK;");
                         }
                         break;
@@ -89,35 +108,78 @@ public abstract class Piece extends Node {
         }
     }
 
-    public boolean isValidMove(int initialPieceCoordinateCOL, int initialPieceCoordinateROW, int col, int row, String[][] boardCurrent) {
-
+    public boolean isValidMove(int col, int row, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
 
         return switch (this.getType()) {
             case "queen" ->
-                    ((Queen) this).isValidQueenMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                    ((Queen) this).isValidQueenMove(col, row, boardCurrent);
             case "bishop" ->
-                    ((Bishop) this).isValidBishopMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                    ((Bishop) this).isValidBishopMove(col, row, boardCurrent);
             case "knight" ->
-                    ((Knight) this).isValidKnightMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                    ((Knight) this).isValidKnightMove(col, row, boardCurrent);
             case "pawn" ->
-                    ((Pawn) this).isValidPawnMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                    ((Pawn) this).isValidPawnMove(col, row, boardCurrent);
             case "rook" ->
-                    ((Rook) this).isValidRookMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                    ((Rook) this).isValidRookMove(col, row, boardCurrent);
             case "king" ->
-                    ((King) this).isValidKingMove(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row, boardCurrent);
+                    ((King) this).isValidKingMove(col, row, boardCurrent, threatenedSquares);
             default -> false;
         };
     }
 
-    public boolean isPathClear(int startCol, int startRow, int endCol, int endRow, String[][] boardCurrent) {
-        int colDirection = Integer.compare(endCol, startCol);
-        int rowDirection = Integer.compare(endRow, startRow);
+    public ArrayList<Tile> findThreatenedSquares(String[][] boardCurrent) {
 
-        String currentPiece = boardCurrent[startCol][startRow];
+        ArrayList<Tile> threatenedSquares =  new ArrayList<Tile>();
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+
+                switch(this.getType()) {
+                    case "queen":
+                        if(((Queen) this).isValidQueenMove(col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "bishop":
+                        if(((Bishop) this).isValidBishopMove(col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "knight":
+                        if(((Knight) this).isValidKnightMove(col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "pawn":
+                        if(((Pawn) this).isThreatenedSquare(col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "rook":
+                        if(((Rook) this).isValidRookMove(col, row, boardCurrent)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                    case "king":
+                        if(((King) this).isValidKingMove(col, row, boardCurrent, null)) {
+                            threatenedSquares.add(new Tile(col, row));
+                        }
+                        break;
+                }
+            }
+        }
+        return threatenedSquares;
+    }
+
+    public boolean isPathClear(int endCol, int endRow, String[][] boardCurrent) {
+        int colDirection = Integer.compare(endCol, getCol());
+        int rowDirection = Integer.compare(endRow, getRow());
+
+        String currentPiece = boardCurrent[getCol()][getRow()];
         boolean isWhite = currentPiece.contains("white");
 
-        int currentCol = startCol + colDirection;
-        int currentRow = startRow + rowDirection;
+        int currentCol = getCol() + colDirection;
+        int currentRow = getRow() + rowDirection;
 
         while (currentCol != endCol || currentRow != endRow) {
             if (!"null".equals(boardCurrent[currentCol][currentRow])) {
