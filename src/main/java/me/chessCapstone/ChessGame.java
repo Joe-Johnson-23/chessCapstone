@@ -78,6 +78,10 @@ public class ChessGame extends Application {
 
             if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
                 selectedPiece = imageViewMap.get(typeOfPiece);
+
+                System.out.println("    "+typeOfPiece);
+
+
                 if (selectedPiece != null) {
                     // Store the initial mouse position
                     selectedPiece.setUserData(new Point2D(event.getSceneX(), event.getSceneY()));
@@ -93,11 +97,13 @@ public class ChessGame extends Application {
                     threatenedSquares = squaresThreatenedByWhite;
                 }
 
-                if(!((King) playerKing).isInCheck(threatenedSquares)) {
-                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
-                } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
-                    piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
-                }
+                // if(!((King) playerKing).isInCheck(threatenedSquares)) {
+                //     piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
+                // } else if (((King) playerKing).isInCheck(threatenedSquares) && playerKing.equals(piece)) {
+                //     piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares);
+                // }
+
+                piece.highlightValidMoves(stiles, boardCurrent, threatenedSquares, this);
 
             }
         });
@@ -125,6 +131,7 @@ public class ChessGame extends Application {
                 if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
 
                     if (selectedPiece != null) {
+
 
                         selectedPiece.setLayoutX(0);
                         selectedPiece.setLayoutY(0);
@@ -160,7 +167,7 @@ public class ChessGame extends Application {
                             System.out.println(piece);
 
                             //checks if any possible move is valid in regards to check
-                            validMove = isValidMove(piece, col, row);
+                            validMove = simulateMoveProtectKing(piece, col, row);
 
                             if (validMove) {
                                 // Check for castling
@@ -205,13 +212,13 @@ public class ChessGame extends Application {
 
                                     int capturedPawnRow;
                                     if (pieceType.contains("white")) {
-                                        capturedPawnRow = row + 1; // White pawn captures upward
+                                        capturedPawnRow = row + 1; //White pawn captures upward
                                     } else {
-                                        capturedPawnRow = row - 1; // Black pawn captures downward
+                                        capturedPawnRow = row - 1; //Black pawn captures downward
                                     }
-                                    // Remove the captured pawn from the board
-                                    boardCurrent[capturedPawnRow][col] = "null";
-                                    // Remove the captured pawn's image from the GUI
+                                    //Remove the captured pawn from the board
+                                    boardCurrent[col][capturedPawnRow] = "null";
+                                    //Remove the captured pawn's image from the GUI
                                     gridPane.getChildren().remove(imageViewMap.get(lastPawnMoved));
                                     imageViewMap.remove(lastPawnMoved);
 
@@ -221,7 +228,7 @@ public class ChessGame extends Application {
 
 
 
-                                //check for king
+                                //Check for king
                                 String destinationPiece = boardCurrent[col][row];
                                 if(destinationPiece.contains("king")){
                                     initialPieceCoordinateROW = -1;
@@ -230,7 +237,7 @@ public class ChessGame extends Application {
                                     return;
                                 }
 
-                                // move from current position to new spot
+                                //Move from current position to new spot
                                 gridPane.getChildren().remove(selectedPiece);
                                 gridPane.add(selectedPiece, col, row);
                                 piece.setCol(col);
@@ -265,7 +272,7 @@ public class ChessGame extends Application {
                                 calculateThreatenedSquares();
 
                                 if (isCheckmate()) {
-                                    // Handle checkmate (e.g., end the game, display a message)
+                                    // Handle checkmate
                                     System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
                                 }
                             }else {
@@ -505,7 +512,7 @@ public class ChessGame extends Application {
         calculateThreatenedSquares();
     }
 
-    private boolean isValidMove(Piece piece, int endCol, int endRow) {
+    public boolean simulateMoveProtectKing(Piece piece, int endCol, int endRow) {
         int startCol = piece.getCol();
         int startRow = piece.getRow();
 
@@ -549,7 +556,7 @@ public class ChessGame extends Application {
             if (piece.getColor().equals(isWhiteTurn ? "white" : "black")) {
                 for (int col = 0; col < BOARD_SIZE; col++) {
                     for (int row = 0; row < BOARD_SIZE; row++) {
-                        if (isValidMove(piece, col, row)) {
+                        if (simulateMoveProtectKing(piece, col, row)) {
                             return false; //found move, not checkmate
                         }
                     }
