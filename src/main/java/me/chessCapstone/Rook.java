@@ -21,5 +21,9 @@ public class Rook extends Piece {
         return false;
     }
 
+    public void handleCastlingMove(int newCol) {
+        this.setCol(newCol);
+        this.setMoved(true);
+    }
 
 }

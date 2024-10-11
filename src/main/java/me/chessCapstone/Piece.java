@@ -81,10 +81,11 @@ public abstract class Piece extends Node {
                         }
                         break;
                     case "king":
-                        if (((King) this).isValidKingMove(col, row, boardCurrent, threatenedSquares) &&
+                        if ((((King) this).isValidKingMove(col, row, boardCurrent, threatenedSquares) ||
+                                ((King) this).isCastlingValid(col, boardCurrent, threatenedSquares)) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: BLACK;";
+                            highlightColor = "-fx-background-color: ORANGE;";
                         }
                         break;
                     case "rook":

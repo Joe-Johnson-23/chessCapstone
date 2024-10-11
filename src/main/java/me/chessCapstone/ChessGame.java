@@ -79,7 +79,7 @@ public class ChessGame extends Application {
             if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
                 selectedPiece = imageViewMap.get(typeOfPiece);
 
-                System.out.println("    "+typeOfPiece);
+                //System.out.println("    "+typeOfPiece);
 
 
                 if (selectedPiece != null) {
@@ -172,29 +172,15 @@ public class ChessGame extends Application {
                             if (validMove) {
                                 // Check for castling
                                 if (pieceType.contains("king") && Math.abs(col - initialPieceCoordinateCOL) == 2) {
-                                    if (isCastlingValid(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row)) {
-                                        // Perform castling
-                                        boolean isKingSide = col > initialPieceCoordinateCOL;
-                                        int rookStartCol = isKingSide ? 7 : 0;
-                                        int rookEndCol = isKingSide ? col - 1 : col + 1;
-
-                                        // Move rook
-                                        String rookPiece = boardCurrent[rookStartCol][row];
-                                        ImageView rookView = imageViewMap.get(rookPiece);
-                                        gridPane.getChildren().remove(rookView);
-                                        gridPane.add(rookView, rookEndCol, row);
-                                        boardCurrent[rookStartCol][row] = "null";
-                                        boardCurrent[rookEndCol][row] = rookPiece;
-
-                                        // Update rook's moved status
-                                        pieces.get(rookPiece).setMoved(true);
+                                    King king = (King) piece;
+                                    if (king.isCastlingValid(col, boardCurrent, isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite)) {
+                                        handleCastling(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row);
                                     } else {
                                         // Invalid castling, return king to original position
                                         gridPane.getChildren().remove(selectedPiece);
                                         gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                                         return;
                                     }
-
                                 }
 
 
@@ -227,15 +213,6 @@ public class ChessGame extends Application {
 
 
 
-
-                                //Check for king
-                                String destinationPiece = boardCurrent[col][row];
-                                if(destinationPiece.contains("king")){
-                                    initialPieceCoordinateROW = -1;
-                                    initialPieceCoordinateCOL = -1;
-                                    selectedPiece = null;
-                                    return;
-                                }
 
                                 //Move from current position to new spot
                                 gridPane.getChildren().remove(selectedPiece);
@@ -289,8 +266,8 @@ public class ChessGame extends Application {
                         // reset initial coordinate
                         initialPieceCoordinateROW = -1;
                         initialPieceCoordinateCOL = -1;
-                        // print the current board
-                        printBoardState();
+
+                        // printBoardState();
                         calculateThreatenedSquares();
                         selectedPiece = null; // Reset selected piece
 
@@ -384,7 +361,7 @@ public class ChessGame extends Application {
 
             }
         }
-        System.out.println();
+
 
     }
 
@@ -472,37 +449,22 @@ public class ChessGame extends Application {
 
     }
 
-    private boolean hasKingMoved(String color) {
-        String kingKey = "king1" + color;
-        return pieces.get(kingKey).hasMoved();
-    }
-
-    private boolean hasRookMoved(String color, String side) {
-        String rookKey = "rook" + (side.equals("kingside") ? "2" : "1") + color;
-        return pieces.get(rookKey).hasMoved();
-    }
-
-
-    private boolean isCastlingValid(int startCol, int startRow, int endCol, int endRow) {
-        String color = boardCurrent[startCol][startRow].contains("white") ? "white" : "black";
+    private void handleCastling(int startCol, int startRow, int endCol, int endRow) {
         boolean isKingSide = endCol > startCol;
+        int rookStartCol = isKingSide ? 7 : 0;
+        int rookEndCol = isKingSide ? endCol - 1 : endCol + 1;
 
-        // Check if king and rook have moved
-        if (hasKingMoved(color) || hasRookMoved(color, isKingSide ? "kingside" : "queenside")) {
-            return false;
-        }
+        // Move rook
+        String rookPiece = boardCurrent[rookStartCol][startRow];
+        ImageView rookView = imageViewMap.get(rookPiece);
+        gridPane.getChildren().remove(rookView);
+        gridPane.add(rookView, rookEndCol, startRow);
+        boardCurrent[rookStartCol][startRow] = "null";
+        boardCurrent[rookEndCol][startRow] = rookPiece;
 
-        // Check if path is clear
-        int direction = isKingSide ? 1 : -1;
-        for (int col = startCol + direction; col != endCol; col += direction) {
-            if (!boardCurrent[col][startRow].equals("null")) {
-                return false;
-            }
-        }
-
-        // TODO: Check if king passes through check
-
-        return true;
+        // Update rook's position and moved status
+        Rook rook = (Rook) pieces.get(rookPiece);
+        rook.handleCastlingMove(rookEndCol);
     }
 
     private void initializeGame() {
@@ -567,12 +529,6 @@ public class ChessGame extends Application {
     }
 
     public static void main(String[] args) {
-        try {
-            launch(args);
-            System.exit(0);
-        } catch (Exception error) {
-            error.printStackTrace();
-            System.exit(0);
-        }
+        launch(args);
     }
 }
