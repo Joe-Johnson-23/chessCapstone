@@ -66,43 +66,59 @@ public abstract class Piece extends Node {
         piece.setFitHeight(100);
     }
 
-    public void highlightValidMoves(StackPane[][] stiles, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
-
-
+    public void highlightValidMoves(StackPane[][] stiles, String[][] boardCurrent, ArrayList<Tile> threatenedSquares, ChessGame game) {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
+                boolean isValidMove = false;
+                String highlightColor = "";
 
                 switch(this.getType()) {
                     case "queen":
-                        if(((Queen) this).isValidQueenMove(col, row, boardCurrent)) {
-                            stiles[row][col].setStyle("-fx-background-color: LIMEGREEN;");
-                        }
-                        break;
-                    case "bishop":
-                        if(((Bishop) this).isValidBishopMove(col, row, boardCurrent)) {
-                            stiles[row][col].setStyle("-fx-background-color: RED;");
-                        }
-                        break;
-                    case "knight":
-                        if(((Knight) this).isValidKnightMove(col, row, boardCurrent)) {
-                            stiles[row][col].setStyle("-fx-background-color: BLUE;");
-                        }
-                        break;
-                    case "pawn":
-                        if(((Pawn) this).isValidPawnMove(col, row, boardCurrent)) {
-                            stiles[row][col].setStyle("-fx-background-color: PURPLE;");
-                        }
-                        break;
-                    case "rook":
-                        if(((Rook) this).isValidRookMove(col, row, boardCurrent)) {
-                            stiles[row][col].setStyle("-fx-background-color: YELLOW;");
+                        if (((Queen) this).isValidQueenMove(col, row, boardCurrent) &&
+                                game.simulateMoveProtectKing(this, col, row)) {
+                            isValidMove = true;
+                            highlightColor = "-fx-background-color: PINK;";
                         }
                         break;
                     case "king":
-                        if(((King) this).isValidKingMove(col, row, boardCurrent, threatenedSquares)) {
-                            stiles[row][col].setStyle("-fx-background-color: PINK;");
+                        if (((King) this).isValidKingMove(col, row, boardCurrent, threatenedSquares) &&
+                                game.simulateMoveProtectKing(this, col, row)) {
+                            isValidMove = true;
+                            highlightColor = "-fx-background-color: BLACK;";
                         }
                         break;
+                    case "rook":
+                        if (((Rook) this).isValidRookMove(col, row, boardCurrent) &&
+                                game.simulateMoveProtectKing(this, col, row)) {
+                            isValidMove = true;
+                            highlightColor = "-fx-background-color: RED;";
+                        }
+                        break;
+                    case "bishop":
+                        if (((Bishop) this).isValidBishopMove(col, row, boardCurrent) &&
+                                game.simulateMoveProtectKing(this, col, row)) {
+                            isValidMove = true;
+                            highlightColor = "-fx-background-color: YELLOW;";
+                        }
+                        break;
+                    case "knight":
+                        if (((Knight) this).isValidKnightMove(col, row, boardCurrent) &&
+                                game.simulateMoveProtectKing(this, col, row)) {
+                            isValidMove = true;
+                            highlightColor = "-fx-background-color: GREEN;";
+                        }
+                        break;
+                    case "pawn":
+                        if (((Pawn) this).isValidPawnMove(col, row, boardCurrent) &&
+                                game.simulateMoveProtectKing(this, col, row)) {
+                            isValidMove = true;
+                            highlightColor = "-fx-background-color: BLUE;";
+                        }
+                        break;
+                }
+
+                if (isValidMove) {
+                    stiles[row][col].setStyle(highlightColor);
                 }
             }
         }
