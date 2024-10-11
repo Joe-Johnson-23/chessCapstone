@@ -50,6 +50,43 @@ public class King extends Piece {
         return !hasMoved() && getRow() == endRow && Math.abs(endCol - getCol()) == 2; // The actual validation will be done in the ChessGame class
     }
 
+    public boolean isCastlingValid(int endCol, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
+        boolean isKingSide = endCol > this.getCol();
+        int direction = isKingSide ? 1 : -1;
+        int rookCol = isKingSide ? 7 : 0;
 
+        // Check if king and rook have moved
+        if (this.hasMoved() || !isPathClearForCastling(rookCol, boardCurrent)) {
+            return false;
+        }
+
+        // Check if king passes through check
+        for (int col = this.getCol(); col != endCol; col += direction) {
+            if (isSquareThreatened(col, this.getRow(), threatenedSquares)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private boolean isPathClearForCastling(int rookCol, String[][] boardCurrent) {
+        int direction = rookCol > this.getCol() ? 1 : -1;
+        for (int col = this.getCol() + direction; col != rookCol; col += direction) {
+            if (!boardCurrent[col][this.getRow()].equals("null")) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private boolean isSquareThreatened(int col, int row, ArrayList<Tile> threatenedSquares) {
+        for (Tile tile : threatenedSquares) {
+            if (tile.getCol() == col && tile.getRow() == row) {
+                return true;
+            }
+        }
+        return false;
+    }
 
 }
