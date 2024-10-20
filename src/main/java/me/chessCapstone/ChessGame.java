@@ -51,6 +51,7 @@ public class ChessGame extends Application {
         gridPane = new GridPane();
         boardCurrent = new Board(gridPane);
         setUpPieces(gridPane);
+        System.out.println(boardCurrent.getFENNotation(pieces));
 
 
         // 배열 초기화

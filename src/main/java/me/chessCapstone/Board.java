@@ -68,10 +68,54 @@ public class Board {
         }
     }
 
-    public String getFENNotation() {
+    public String getFENNotation(HashMap<String, Piece> pieces) {
 
+        StringBuilder sb = new StringBuilder();
+        int emptyTileCounter = 0;
 
-        return null;
+        for(int row = 0; row < BOARD_SIZE; row++) {
+
+            for(int col = 0; col < BOARD_SIZE; col++) {
+
+                Piece piece = pieces.get(this.get(col, row));
+                String next = null;
+
+                if(piece != null) {
+
+                    if(emptyTileCounter != 0) {
+                        sb.append(emptyTileCounter);
+                        emptyTileCounter = 0;
+                    }
+
+                    switch (piece.getType()) {
+                        case "king" -> next = "k";
+                        case "queen" -> next = "q";
+                        case "knight" -> next = "n";
+                        case "bishop" -> next = "b";
+                        case "rook" -> next = "r";
+                        case "pawn" -> next = "p";
+                    }
+
+                    if(piece.getColor().equals("white")) {
+                        next = next.toUpperCase();
+                    }
+
+                    sb.append(next);
+
+                } else {
+                    emptyTileCounter++;
+                }
+
+            }
+
+            if(emptyTileCounter != 0) {
+                sb.append(emptyTileCounter);
+                emptyTileCounter = 0;
+            }
+
+        }
+
+        return sb.toString();
     }
 
 }
