@@ -113,9 +113,9 @@ public class Board {
                 emptyTileCounter = 0;
             }
 
-            sb.append("/");
-
         }
+
+        sb.append(" ");
 
         if(isWhiteTurn) {
             sb.append("w");
@@ -123,7 +123,7 @@ public class Board {
             sb.append("b");
         }
 
-        sb.append("/");
+        sb.append(" ");
 
         if(!pieces.get("king1white").hasMoved()) {
 
@@ -145,17 +145,18 @@ public class Board {
 
         if(!pieces.get("king1black").hasMoved()) {
 
-            if(!pieces.get("rook1black").hasMoved()) {
+            if(!pieces.get("rook2black").hasMoved()) {
                 sb.append("k");
             } else {
                 sb.append("-");
             }
 
-            if(!pieces.get("rook2black").hasMoved()) {
+            if(!pieces.get("rook1black").hasMoved()) {
                 sb.append("q");
             } else {
                 sb.append("-");
             }
+
         } else {
             sb.append("--");
         }
