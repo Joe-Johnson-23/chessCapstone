@@ -68,7 +68,7 @@ public class Board {
         }
     }
 
-    public String getFENNotation(HashMap<String, Piece> pieces) {
+    public String getFENNotation(HashMap<String, Piece> pieces, boolean isWhiteTurn) {
 
         StringBuilder sb = new StringBuilder();
         int emptyTileCounter = 0;
@@ -113,7 +113,53 @@ public class Board {
                 emptyTileCounter = 0;
             }
 
+            sb.append("/");
+
         }
+
+        if(isWhiteTurn) {
+            sb.append("w");
+        } else {
+            sb.append("b");
+        }
+
+        sb.append("/");
+
+        if(!pieces.get("king1white").hasMoved()) {
+
+            if(!pieces.get("rook2white").hasMoved()) {
+                sb.append("K");
+            } else {
+                sb.append("-");
+            }
+
+            if(!pieces.get("rook1white").hasMoved()) {
+                sb.append("Q");
+            } else {
+                sb.append("-");
+            }
+
+        } else {
+            sb.append("-");
+        }
+
+        if(!pieces.get("king1black").hasMoved()) {
+
+            if(!pieces.get("rook1black").hasMoved()) {
+                sb.append("k");
+            } else {
+                sb.append("-");
+            }
+
+            if(!pieces.get("rook2black").hasMoved()) {
+                sb.append("q");
+            } else {
+                sb.append("-");
+            }
+        } else {
+            sb.append("-");
+        }
+
 
         return sb.toString();
     }

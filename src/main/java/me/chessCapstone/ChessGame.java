@@ -51,8 +51,6 @@ public class ChessGame extends Application {
         gridPane = new GridPane();
         boardCurrent = new Board(gridPane);
         setUpPieces(gridPane);
-        System.out.println(boardCurrent.getFENNotation(pieces));
-
 
         // 배열 초기화
         for (int row = 0; row < BOARD_SIZE; row++) {
@@ -278,6 +276,7 @@ public class ChessGame extends Application {
 
                 }
             }
+            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn));
         });
 
         primaryStage.setScene(scene);
@@ -346,7 +345,7 @@ public class ChessGame extends Application {
     private void setUpPieces(GridPane gridPane) {
 
 
-        String[] pieceList = {"rook1", "knight1", "bishop1", "king1", "queen1", "bishop2", "knight2", "rook2",
+        String[] pieceList = {"rook1", "knight1", "bishop1", "queen1", "king1", "bishop2", "knight2", "rook2",
                 "pawn0", "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7"};
 
         String[] colors = {"black", "white"};
@@ -360,8 +359,6 @@ public class ChessGame extends Application {
                 if (col == 8) {
                     if (row == 1) {
                         row = 7;
-                        pieceList[3] = "queen1";
-                        pieceList[4] = "king1";
                     } else if (row == 7) {
                         row--;
                     } else {
