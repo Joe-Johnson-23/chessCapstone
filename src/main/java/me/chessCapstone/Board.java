@@ -68,7 +68,7 @@ public class Board {
         }
     }
 
-    public String getFENNotation(HashMap<String, Piece> pieces, boolean isWhiteTurn) {
+    public String getFENNotation(HashMap<String, Piece> pieces, boolean isWhiteTurn, boolean enPassantPossible, int numberOfHalfMoves, int numberOfMoves) {
 
         StringBuilder sb = new StringBuilder();
         int emptyTileCounter = 0;
@@ -140,7 +140,7 @@ public class Board {
             }
 
         } else {
-            sb.append("-");
+            sb.append("--");
         }
 
         if(!pieces.get("king1black").hasMoved()) {
@@ -157,9 +157,16 @@ public class Board {
                 sb.append("-");
             }
         } else {
-            sb.append("-");
+            sb.append("--");
         }
 
+        if(enPassantPossible) {
+            sb.append(" En Passant is Possible");
+        } else {
+            sb.append(" -");
+        }
+
+        sb.append(" NHM not functional ").append(numberOfMoves);
 
         return sb.toString();
     }

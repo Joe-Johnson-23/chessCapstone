@@ -45,6 +45,7 @@ public class ChessGame extends Application {
     private Map<String, ImageView> imageViewMap = new HashMap<>();
     private King whiteKing;
     private King blackKing;
+    private int numberOfMoves = 1;
 
     @Override
     public void start(Stage primaryStage) {
@@ -210,10 +211,6 @@ public class ChessGame extends Application {
 
                                 }
 
-
-
-
-
                                 //Move from current position to new spot
                                 gridPane.getChildren().remove(selectedPiece);
                                 gridPane.add(selectedPiece, col, row);
@@ -244,6 +241,11 @@ public class ChessGame extends Application {
 
                                 // Update piece's moved status
                                 piece.setMoved(true);
+
+                                if(!isWhiteTurn) {
+                                    numberOfMoves++;
+                                }
+
                                 switchTurn();
 
                                 calculateThreatenedSquares();
@@ -276,7 +278,7 @@ public class ChessGame extends Application {
 
                 }
             }
-            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn));
+            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn, EnPassantPossible, 0, numberOfMoves));
         });
 
         primaryStage.setScene(scene);
