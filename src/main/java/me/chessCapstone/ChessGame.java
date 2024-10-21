@@ -43,7 +43,7 @@ public class ChessGame extends Application {
     private Map<String, ImageView> imageViewMap = new HashMap<>();
     private King whiteKing;
     private King blackKing;
-    private Tile enPassantTile = new Tile();
+    private Tile enPassantTile = new Tile(-1, -1);
     private int halfMoveClock = 0, numberOfMoves = 1;
 
     @Override
@@ -188,7 +188,7 @@ public class ChessGame extends Application {
                                     lastMoveWasDoublePawnMove = true;
                                     lastPawnMoved = boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW);
                                     enPassantTile.setCol(initialPieceCoordinateCOL);
-                                    enPassantTile.setRow(initialPieceCoordinateROW + 2);
+                                    enPassantTile.setRow(initialPieceCoordinateROW);
                                 } else {
                                     lastMoveWasDoublePawnMove = false;
                                     enPassantTile.setCol(-1);
@@ -396,7 +396,6 @@ public class ChessGame extends Application {
     private Piece createPiece(String type, String color) {
 
         type = type.replaceAll("\\d", "");
-
 
         return switch (type) {
             case "king" -> new King(color);

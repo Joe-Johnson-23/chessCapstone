@@ -4,10 +4,6 @@ public class Tile {
 
     private int row, col;
 
-    public Tile() {
-
-    }
-
     public Tile(int col, int row) {
         this.col = col;
         this.row = row;
