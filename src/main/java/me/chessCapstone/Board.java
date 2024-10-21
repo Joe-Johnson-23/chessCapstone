@@ -69,7 +69,7 @@ public class Board {
         }
     }
 
-    public String getFENNotation(HashMap<String, Piece> pieces, boolean isWhiteTurn, boolean enPassantPossible, int numberOfHalfMoves, int numberOfMoves) {
+    public String getFENNotation(HashMap<String, Piece> pieces, boolean isWhiteTurn, Tile enPassantTile, int numberOfHalfMoves, int numberOfMoves) {
 
         StringBuilder sb = new StringBuilder();
         int emptyTileCounter = 0;
@@ -122,50 +122,72 @@ public class Board {
             sb.append(" b");
         }
 
+        sb.append(" ").append(enPassantConversion(enPassantTile));
         sb.append(" ").append(castlingRights(pieces));
         sb.append(" ").append(numberOfHalfMoves);
         sb.append(" ").append(numberOfMoves);
         return sb.toString();
     }
 
+    public StringBuilder enPassantConversion(Tile enPassantTile) {
+
+        StringBuilder sb = new StringBuilder();
+
+        switch(enPassantTile.getCol()) {
+            case 0:
+                sb.append("a");
+                break;
+            case 1:
+                sb.append("b");
+                break;
+            case 2:
+                sb.append("c");
+                break;
+            case 3:
+                sb.append("d");
+                break;
+            case 4:
+                sb.append("e");
+                break;
+            case 5:
+                sb.append("f");
+                break;
+            case 6:
+                sb.append("g");
+                break;
+            case 7:
+                sb.append("h");
+                break;
+            default:
+                sb.append("-");
+                return sb;
+        }
+        sb.append(enPassantTile.getCol());
+        return sb;
+    }
+
     public StringBuilder castlingRights(HashMap<String, Piece> pieces) {
         StringBuilder sb = new StringBuilder();
 
-        if (!pieces.get("king1white").hasMoved()) {
+        // Check castling rights for white
+        appendCastlingRights(sb, pieces, "white", "K", "Q");
 
-            if (!pieces.get("rook2white").hasMoved()) {
-                sb.append("K");
-            } else {
-                sb.append("-");
-            }
+        // Check castling rights for black
+        appendCastlingRights(sb, pieces, "black", "k", "q");
 
-            if (!pieces.get("rook1white").hasMoved()) {
-                sb.append("Q");
-            } else {
-                sb.append("-");
-            }
-
-        } else {
-            sb.append("--");
-        }
-
-        if (!pieces.get("king1black").hasMoved()) {
-
-            if (!pieces.get("rook2black").hasMoved()) {
-                sb.append("k");
-            } else {
-                sb.append("-");
-            }
-
-            if (!pieces.get("rook1black").hasMoved()) {
-                sb.append("q");
-            } else {
-                sb.append("-");
-            }
-
-        } else {
-            sb.append("--");
-        }
         return sb;
+    }
+
+    private void appendCastlingRights(StringBuilder sb, HashMap<String, Piece> pieces, String color, String kingside, String queenside) {
+        String kingKey = "king1" + color;
+        String rook1Key = "rook1" + color;
+        String rook2Key = "rook2" + color;
+
+        if (!pieces.get(kingKey).hasMoved()) {
+            sb.append(!pieces.get(rook2Key).hasMoved() ? kingside : "-");
+            sb.append(!pieces.get(rook1Key).hasMoved() ? queenside : "-");
+        } else {
+            sb.append("--");
+        }
     }
 }

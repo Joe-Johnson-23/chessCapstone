@@ -17,8 +17,6 @@ public class ChessGame extends Application {
     private boolean isWhiteTurn = true;
 
     HashMap<String, Piece> pieces = new HashMap<>();
-    //private StackPane[][] stiles = new StackPane[BOARD_SIZE][BOARD_SIZE];
-    //private String[][] boardCurrent = new String[BOARD_SIZE][BOARD_SIZE];
     private Board boardCurrent;
     private ArrayList<Tile> squaresThreatenedByWhite = new ArrayList<>();
     private ArrayList<Tile> squaresThreatenedByBlack = new ArrayList<>();
@@ -45,6 +43,7 @@ public class ChessGame extends Application {
     private Map<String, ImageView> imageViewMap = new HashMap<>();
     private King whiteKing;
     private King blackKing;
+    private Tile enPassantTile = new Tile();
     private int halfMoveClock = 0, numberOfMoves = 1;
 
     @Override
@@ -188,9 +187,12 @@ public class ChessGame extends Application {
                                 if (pieceType.contains("pawn") && Math.abs(row - initialPieceCoordinateROW) == 2) {
                                     lastMoveWasDoublePawnMove = true;
                                     lastPawnMoved = boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW);
-
-                                }else {
+                                    enPassantTile.setCol(initialPieceCoordinateCOL);
+                                    enPassantTile.setRow(initialPieceCoordinateROW + 2);
+                                } else {
                                     lastMoveWasDoublePawnMove = false;
+                                    enPassantTile.setCol(-1);
+                                    enPassantTile.setRow(-1);
                                 }
 
                                 //check for en passant, if possible, remove captured pawn from board and GUI
@@ -283,7 +285,7 @@ public class ChessGame extends Application {
 
                 }
             }
-            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn, EnPassantPossible, halfMoveClock, numberOfMoves));
+            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves));
         });
 
         primaryStage.setScene(scene);
