@@ -4,6 +4,8 @@ import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -70,14 +72,16 @@ public abstract class Piece extends Node {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 boolean isValidMove = false;
-                String highlightColor = "";
+                // String highlightColor = "";
+                Color highlightColor2 = Color.WHITE;
 
                 switch(this.getType()) {
                     case "queen":
                         if (((Queen) this).isValidQueenMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: PINK;";
+                            // highlightColor = "-fx-background-color: rgba(255, 192, 203, 0.5);";
+                            highlightColor2 = Color.PEACHPUFF;
                         }
                         break;
                     case "king":
@@ -85,44 +89,65 @@ public abstract class Piece extends Node {
                                 ((King) this).isCastlingValid(col, boardCurrent, threatenedSquares)) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: ORANGE;";
+                            //highlightColor = "-fx-background-color: ORANGE;";
+                            highlightColor2 = Color.LAVENDER;
                         }
                         break;
                     case "rook":
                         if (((Rook) this).isValidRookMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: RED;";
+                            // highlightColor = "-fx-background-color: RED;";
+                            highlightColor2 = Color.TOMATO;
                         }
                         break;
                     case "bishop":
                         if (((Bishop) this).isValidBishopMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: YELLOW;";
+                            // highlightColor = "-fx-background-color: YELLOW;";
+                            highlightColor2 = Color.GOLDENROD;
                         }
                         break;
                     case "knight":
                         if (((Knight) this).isValidKnightMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: GREEN;";
+                            // highlightColor = "-fx-background-color: GREEN;";
+                            highlightColor2 = Color.MEDIUMAQUAMARINE;
                         }
                         break;
                     case "pawn":
                         if (((Pawn) this).isValidPawnMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor = "-fx-background-color: BLUE;";
+                            // highlightColor = "-fx-background-color: BLUE;";
+                            highlightColor2 = Color.CORNFLOWERBLUE;
                         }
                         break;
                 }
 
                 if (isValidMove) {
-                    stiles[row][col].setStyle(highlightColor);
+                    // stiles[row][col].setStyle(highlightColor);
+
+                    StackPane tilePane = stiles[row][col];
+                    addHighlightCircle(tilePane, highlightColor2);
                 }
             }
         }
+    }
+    private void addHighlightCircle(StackPane tilePane, Color color) {
+        // Remove any existing highlight circles
+        tilePane.getChildren().removeIf(node -> node instanceof Circle);
+
+        // Create a new circle
+        Circle highlightCircle = new Circle(15); // Adjust the size as needed
+        highlightCircle.setFill(color.deriveColor(0, 1, 1, 0.8)); // 50% opacity
+        highlightCircle.setStroke(color);
+        highlightCircle.setStrokeWidth(2);
+
+        // Add the circle to the tile
+        tilePane.getChildren().add(highlightCircle);
     }
 
     public boolean isValidMove(int col, int row, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
@@ -225,3 +250,4 @@ public abstract class Piece extends Node {
     }
 
 }
+
