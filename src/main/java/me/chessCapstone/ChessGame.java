@@ -331,10 +331,16 @@ public class ChessGame extends Application {
 
         isWhiteTurn = !isWhiteTurn;
 
+
+
+        //Updates King's square for check (red square)
         updateCheckStatus();
 
         if (checkForThreefoldRepetition()) {
             handleThreefoldRepetition();
+        }
+        if(isStalemate()) {
+            handleStalemate();
         }
 
 
@@ -1250,6 +1256,50 @@ public class ChessGame extends Application {
         });
     }
 
+    //Stalemate
+    private boolean isStalemate() {
+        if (hasNoLegalMoves()) {
+            King currentKing = isWhiteTurn ? whiteKing : blackKing;
+            ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
+            return !currentKing.isInCheck(threatenedSquares);
+        }
+        return false;
+    }
+
+    private boolean hasNoLegalMoves() {
+        String currentColor = isWhiteTurn ? "white" : "black";
+
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                String pieceKey = boardCurrent[col][row];
+                if (!pieceKey.equals("null") && pieceKey.contains(currentColor)) {
+                    Piece piece = pieces.get(pieceKey);
+                    if (piece != null) {
+                        for (int newCol = 0; newCol < BOARD_SIZE; newCol++) {
+                            for (int newRow = 0; newRow < BOARD_SIZE; newRow++) {
+                                if (simulateMoveProtectKing(piece, newCol, newRow)) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return true;
+    }
+
+    private void handleStalemate() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Stalemate");
+            alert.setHeaderText(null);
+            alert.setContentText("STALEMATE!");
+            alert.showAndWait();
+            handleGameEnd("Better luck next time!");
+        });
+    }
+
 
     private void restartApplication(Stage currentStage) {
         Platform.runLater(() -> {
@@ -1295,5 +1345,6 @@ public class ChessGame extends Application {
 
         launch(args);
     }
-}
 
+
+}
