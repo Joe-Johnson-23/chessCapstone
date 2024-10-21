@@ -45,7 +45,7 @@ public class ChessGame extends Application {
     private Map<String, ImageView> imageViewMap = new HashMap<>();
     private King whiteKing;
     private King blackKing;
-    private int numberOfMoves = 1;
+    private int halfMoveClock = 0, numberOfMoves = 1;
 
     @Override
     public void start(Stage primaryStage) {
@@ -132,7 +132,6 @@ public class ChessGame extends Application {
                 if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
 
                     if (selectedPiece != null) {
-
 
                         selectedPiece.setLayoutX(0);
                         selectedPiece.setLayoutY(0);
@@ -246,6 +245,12 @@ public class ChessGame extends Application {
                                     numberOfMoves++;
                                 }
 
+                                if(currentPiece.contains("pawn") || !toBeRemoved.equals("null")) {
+                                    halfMoveClock = 0;
+                                } else {
+                                    halfMoveClock++;
+                                }
+
                                 switchTurn();
 
                                 calculateThreatenedSquares();
@@ -278,7 +283,7 @@ public class ChessGame extends Application {
 
                 }
             }
-            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn, EnPassantPossible, 0, numberOfMoves));
+            System.out.println(boardCurrent.getFENNotation(pieces, isWhiteTurn, EnPassantPossible, halfMoveClock, numberOfMoves));
         });
 
         primaryStage.setScene(scene);

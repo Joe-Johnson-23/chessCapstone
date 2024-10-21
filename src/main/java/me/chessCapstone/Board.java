@@ -26,6 +26,7 @@ public class Board {
                 gridPane.add(stile, col, row);
 
             }
+
         }
 
     }
@@ -115,25 +116,30 @@ public class Board {
 
         }
 
-        sb.append(" ");
-
         if(isWhiteTurn) {
-            sb.append("w");
+            sb.append(" w");
         } else {
-            sb.append("b");
+            sb.append(" b");
         }
 
-        sb.append(" ");
+        sb.append(" ").append(castlingRights(pieces));
+        sb.append(" ").append(numberOfHalfMoves);
+        sb.append(" ").append(numberOfMoves);
+        return sb.toString();
+    }
 
-        if(!pieces.get("king1white").hasMoved()) {
+    public StringBuilder castlingRights(HashMap<String, Piece> pieces) {
+        StringBuilder sb = new StringBuilder();
 
-            if(!pieces.get("rook2white").hasMoved()) {
+        if (!pieces.get("king1white").hasMoved()) {
+
+            if (!pieces.get("rook2white").hasMoved()) {
                 sb.append("K");
             } else {
                 sb.append("-");
             }
 
-            if(!pieces.get("rook1white").hasMoved()) {
+            if (!pieces.get("rook1white").hasMoved()) {
                 sb.append("Q");
             } else {
                 sb.append("-");
@@ -143,15 +149,15 @@ public class Board {
             sb.append("--");
         }
 
-        if(!pieces.get("king1black").hasMoved()) {
+        if (!pieces.get("king1black").hasMoved()) {
 
-            if(!pieces.get("rook2black").hasMoved()) {
+            if (!pieces.get("rook2black").hasMoved()) {
                 sb.append("k");
             } else {
                 sb.append("-");
             }
 
-            if(!pieces.get("rook1black").hasMoved()) {
+            if (!pieces.get("rook1black").hasMoved()) {
                 sb.append("q");
             } else {
                 sb.append("-");
@@ -160,16 +166,6 @@ public class Board {
         } else {
             sb.append("--");
         }
-
-        if(enPassantPossible) {
-            sb.append(" En Passant is Possible");
-        } else {
-            sb.append(" -");
-        }
-
-        sb.append(" NHM not functional ").append(numberOfMoves);
-
-        return sb.toString();
+        return sb;
     }
-
 }
