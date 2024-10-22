@@ -20,6 +20,8 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -321,6 +323,7 @@ public class ChessGame extends Application {
 
         isWhiteTurn = !isWhiteTurn;
 
+        playMoveSound();
         //Updates King's square for check (red square)
         updateCheckStatus();
 
@@ -1262,6 +1265,19 @@ public class ChessGame extends Application {
     }
 
 
+    private void playMoveSound() {
+        try {
+            String soundFile = "/move_sound.wav";
+            Media sound = new Media(getClass().getResource(soundFile).toExternalForm());
+            MediaPlayer mediaPlayer = new MediaPlayer(sound);
+            mediaPlayer.play();
+
+
+        } catch (Exception e) {
+            System.err.println("Error playing move sound: " + e.getMessage());
+
+        }
+    }
 
 
 
