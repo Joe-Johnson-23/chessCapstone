@@ -1,5 +1,6 @@
 package me.chessCapstone;
 
+import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Scene;
@@ -22,6 +23,8 @@ import javafx.scene.control.ButtonType;
 
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.util.Duration;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -235,15 +238,15 @@ public class ChessGame extends Application {
                                 } else {
                                     halfMoveClock++;
                                 }
-
-                                switchTurn();
                                 piece.setMoved(true);
                                 calculateThreatenedSquares();
+                                switchTurn();
 
-                                if (isCheckmate()) {
-                                    //Handle checkmate
-                                    System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
-                                }
+//
+//                                if (isCheckmate()) {
+//                                    //Handle checkmate
+//                                    System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
+//                                }
 
                             }else {
                                 //if move invalid, return to last position
@@ -323,17 +326,25 @@ public class ChessGame extends Application {
 
     private void switchTurn() {
 
-        isWhiteTurn = !isWhiteTurn;
 
+        isWhiteTurn = !isWhiteTurn;
+        boardCurrent.printBoardState();
         playMoveSound();
+
         //Updates King's square for check (red square)
+        calculateThreatenedSquares();
         updateCheckStatus();
+
 
         if (checkForThreefoldRepetition()) {
             handleThreefoldRepetition();
         }
         if(isStalemate()) {
             handleStalemate();
+        }
+        if (isCheckmate()) {
+            //Handle checkmate
+            System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
         }
 
 
@@ -343,23 +354,14 @@ public class ChessGame extends Application {
             if (engine != null) {
 
                 makeEngineMove();
-                //printBoardState();
-                calculateThreatenedSquares();
-                //System.out.println("peices: " + pieces);
-                if (isCheckmate()) {
-                    System.out.println("Black wins by checkmate!");
-                    //Handle end of game
-                }
+
                 switchTurn(); //Switch back to white's turn
             } else {
                 System.err.println("Cannot make engine move: Chess engine is not initialized!");
             }
         } else {
 
-            if (isCheckmate()) {
-                System.out.println((isWhiteTurn ? "Black" : "White") + " wins by checkmate!");
 
-            }
         }
     }
 
@@ -576,10 +578,31 @@ public class ChessGame extends Application {
 
                 handleSpecialMoves(movingPiece, startCol, startRow, endCol, endRow, move.length() == 5 ? move.charAt(4) : ' ');
                 final ImageView movingPieceView = imageViewMap.get(movingPiece);
+
+                //Piece movement
                 Platform.runLater(() -> {
-                    gridPane.getChildren().remove(movingPieceView);
-                    gridPane.add(movingPieceView, endCol, endRow);
+                    //Create and configure the transition
+                    TranslateTransition transition = new TranslateTransition(Duration.millis(500), movingPieceView);
+                    transition.setFromX(0);
+                    transition.setFromY(0);
+                    transition.setToX((endCol - startCol) * TILE_SIZE);
+                    transition.setToY((endRow - startRow) * TILE_SIZE);
+
+                    //Play the transition
+                    transition.play();
+
+                    //After the transition completes, update the piece's position
+                    transition.setOnFinished(e -> {
+                        gridPane.getChildren().remove(movingPieceView);
+                        gridPane.add(movingPieceView, endCol, endRow);
+                        movingPieceView.setTranslateX(0);
+                        movingPieceView.setTranslateY(0);
+                    });
                 });
+
+
+
+
 
                 // Update boardCurrent
                 boardCurrent.set(endCol, endRow, movingPiece);
@@ -593,6 +616,10 @@ public class ChessGame extends Application {
                 }
             }
 
+
+
+
+
             //Update game state
             calculateThreatenedSquares();
 
@@ -603,6 +630,7 @@ public class ChessGame extends Application {
     }
 
     private void updateCheckStatus() {
+        calculateThreatenedSquares();
         boolean whiteInCheck = whiteKing.isInCheck(squaresThreatenedByBlack);
         boolean blackInCheck = blackKing.isInCheck(squaresThreatenedByWhite);
 

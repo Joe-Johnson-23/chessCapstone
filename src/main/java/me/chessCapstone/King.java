@@ -47,10 +47,16 @@ public class King extends Piece {
         }
 
         // Check for castling
-        return !hasMoved() && getRow() == endRow && Math.abs(endCol - getCol()) == 2; // The actual validation will be done in the ChessGame class
+        return !hasMoved() && getRow() == endRow && Math.abs(endCol - getCol()) == 2 && isCastlingValid(endCol, board, threatenedSquares);
     }
 
     public boolean isCastlingValid(int endCol, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
+
+        //Check if king is in check
+        if (isInCheck(threatenedSquares)) {
+            return false;
+        }
+
         boolean isKingSide = endCol > this.getCol();
         int direction = isKingSide ? 1 : -1;
         int rookCol = isKingSide ? 7 : 0;
