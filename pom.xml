@@ -38,6 +38,12 @@
             <version>${junit.version}</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-media</artifactId>
+            <version>18.0.2</version> <!-- Use the appropriate version -->
+
+        </dependency>
     </dependencies>
 
     <build>
@@ -49,6 +55,10 @@
                 <configuration>
                     <source>18</source>
                     <target>18</target>
+                    <compilerArgs>
+                        <arg>--add-modules</arg>
+                        <arg>javafx.media</arg>
+                    </compilerArgs>
                 </configuration>
             </plugin>
             <plugin>
