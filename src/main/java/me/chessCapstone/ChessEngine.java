@@ -23,10 +23,7 @@ public class ChessEngine {
         //Resolve the full path to the Stockfish executable
         Path stockfishPath = resourcesPath.resolve(stockfishRelativePath);
 
-        //Add .exe extension for Windows
-        if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            stockfishPath = Paths.get(stockfishPath.toString() + ".exe");
-        }
+
 
         //Create a File object for the Stockfish executable
         File stockfishFile = stockfishPath.toFile();

@@ -272,9 +272,11 @@ public class ChessGame extends Application {
             System.out.println(boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves));
         });
 
+        primaryStage.setResizable(false);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chess Game");
         primaryStage.show();
+
 
         //Show game mode selection popup
         showGameModeSelectionPopup(primaryStage);
