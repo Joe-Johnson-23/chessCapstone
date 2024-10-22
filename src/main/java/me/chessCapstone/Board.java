@@ -2,6 +2,7 @@ package me.chessCapstone;
 
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Circle;
 
 import java.util.HashMap;
 
@@ -58,18 +59,15 @@ public class Board {
     }
 
     public void resetTileColor() {
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            for (int col = 0; col < BOARD_SIZE; col++) {
-                if ((row + col) % 2 == 0) {
-                    stiles[row][col].setStyle("-fx-background-color: WHITE;");
-                } else {
-                    stiles[row][col].setStyle("-fx-background-color: GRAY;");
-                }
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                StackPane tilePane = this.getStiles()[row][col];
+                tilePane.getChildren().removeIf(node -> node instanceof Circle);
             }
         }
     }
 
-    public String getFENNotation(HashMap<String, Piece> pieces, boolean isWhiteTurn, Tile enPassantTile, int numberOfHalfMoves, int numberOfMoves) {
+    public String boardToFEN(HashMap<String, Piece> pieces, boolean isWhiteTurn, Tile enPassantTile, int numberOfHalfMoves, int numberOfMoves) {
 
         StringBuilder sb = new StringBuilder();
         int emptyTileCounter = 0;
@@ -129,41 +127,8 @@ public class Board {
         return sb.toString();
     }
 
-    public StringBuilder enPassantConversion(Tile enPassantTile) {
-
-        StringBuilder sb = new StringBuilder();
-
-        switch(enPassantTile.getCol()) {
-            case 0:
-                sb.append("a");
-                break;
-            case 1:
-                sb.append("b");
-                break;
-            case 2:
-                sb.append("c");
-                break;
-            case 3:
-                sb.append("d");
-                break;
-            case 4:
-                sb.append("e");
-                break;
-            case 5:
-                sb.append("f");
-                break;
-            case 6:
-                sb.append("g");
-                break;
-            case 7:
-                sb.append("h");
-                break;
-            default:
-                sb.append("-");
-                return sb;
-        }
-        sb.append(enPassantTile.getCol());
-        return sb;
+    public String enPassantConversion(Tile enPassantTile) {
+        return "" + (char)('a' + enPassantTile.getCol()) + enPassantTile.getRow();
     }
 
     public StringBuilder castlingRights(HashMap<String, Piece> pieces) {
