@@ -78,10 +78,11 @@ public class ChessGame extends Application {
     private int halfMoveClock = 0, numberOfMoves = 1, stockfishDepth = 5;;
     private boolean playAgainstStockfish = false;
 
-
+    private Stage primaryStage;
 
     @Override
     public void start(Stage primaryStage) {
+        this.primaryStage = primaryStage;
         gridPane = new GridPane();
         boardCurrent = new Board(gridPane);
         setUpPieces(gridPane);
@@ -1261,6 +1262,8 @@ public class ChessGame extends Application {
     private void restartApplication(Stage currentStage) {
         Platform.runLater(() -> {
             try {
+
+
                 ChessGame newInstance = new ChessGame();
                 newInstance.start(currentStage);
             } catch (Exception e) {
@@ -1285,6 +1288,7 @@ public class ChessGame extends Application {
 
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == playAgainButton) {
+                primaryStage.close();
                 Stage next = new Stage();
                 restartApplication(next);
             } else {
