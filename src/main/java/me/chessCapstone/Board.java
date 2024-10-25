@@ -128,7 +128,11 @@ public class Board {
     }
 
     public String enPassantConversion(Tile enPassantTile) {
-        return "" + (char)('a' + enPassantTile.getCol()) + enPassantTile.getRow();
+        if(enPassantTile.getCol() == -1 && enPassantTile.getRow() == -1) {
+            return "-";
+        } else {
+            return "" + (char)('a' + enPassantTile.getCol()) + enPassantTile.getRow();
+        }
     }
 
     public StringBuilder castlingRights(HashMap<String, Piece> pieces) {

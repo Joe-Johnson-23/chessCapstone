@@ -1,30 +1,5 @@
 package me.chessCapstone;
 
-import javafx.animation.TranslateTransition;
-import javafx.application.Application;
-import javafx.application.Platform;
-import javafx.scene.Scene;
-import javafx.scene.control.ChoiceDialog;
-import javafx.scene.image.ImageView;
-import javafx.scene.layout.GridPane;
-import javafx.scene.layout.StackPane;
-import javafx.stage.Stage;
-import javafx.geometry.Point2D;
-import javafx.scene.control.ToggleButton;
-import javafx.scene.control.ToggleGroup;
-import javafx.scene.layout.VBox;
-import javafx.scene.shape.Circle;
-import javafx.geometry.Pos;
-import javafx.stage.Modality;
-import javafx.geometry.Insets;
-
-import javafx.scene.control.Alert;
-import javafx.scene.control.ButtonType;
-
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.util.Duration;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -35,24 +10,38 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+import javafx.animation.TranslateTransition;
+import javafx.application.Application;
+import javafx.application.Platform;
+import javafx.geometry.Insets;
+import javafx.geometry.Point2D;
+import javafx.geometry.Pos;
+import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
+import javafx.scene.control.ChoiceDialog;
+import javafx.scene.control.ToggleButton;
+import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.util.Duration;
+
 public class ChessGame extends Application {
-    private static final int TILE_SIZE = 100;
-    private static final int BOARD_SIZE = 8;
-    private boolean isWhiteTurn = true;
 
-    HashMap<String, Piece> pieces = new HashMap<>();
+    private ArrayList<Tile> squaresThreatenedByWhite = new ArrayList<>(), squaresThreatenedByBlack = new ArrayList<>();
+    private HashMap<String, Piece> pieces = new HashMap<>();
     private Board boardCurrent;
-    private ArrayList<Tile> squaresThreatenedByWhite = new ArrayList<>();
-    private ArrayList<Tile> squaresThreatenedByBlack = new ArrayList<>();
-
-
-    private int initialPieceCoordinateROW;
-    private int initialPieceCoordinateCOL;
-
     private ImageView selectedPiece = null;
-
     private GridPane gridPane;
-
+    private static final int TILE_SIZE = 100, BOARD_SIZE = 8;
+    private int initialPieceCoordinateROW, initialPieceCoordinateCOL;
+    private boolean isWhiteTurn = true;
 
     ///stockfish_______________________________________________________stockfish
     private ChessEngine engine;
@@ -166,7 +155,7 @@ public class ChessGame extends Application {
                         ArrayList<Tile> threatenedSquares;
                         boardCurrent.resetTileColor();
 
-                        // convert mouse coordinates to local Gridpane coordinates
+                        // convert mouse coordinates to local Grid pane coordinates
                         Point2D localPoint = gridPane.sceneToLocal(event.getSceneX(), event.getSceneY());
                         double x = localPoint.getX();
                         double y = localPoint.getY();
@@ -178,7 +167,7 @@ public class ChessGame extends Application {
 
                             String pieceType = typeOfPiece.replaceAll("\\d", "");
 
-                            //checks if any possible move is valid in regards to check
+                            //checks if any possible move is valid in regard to check
                             validMove = simulateMoveProtectKing(piece, col, row);
 
                             if (validMove) {
@@ -242,12 +231,6 @@ public class ChessGame extends Application {
                                 piece.setMoved(true);
                                 calculateThreatenedSquares();
                                 switchTurn();
-
-//
-//                                if (isCheckmate()) {
-//                                    //Handle checkmate
-//                                    System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
-//                                }
 
                             }else {
                                 //if move invalid, return to last position
@@ -747,14 +730,7 @@ public class ChessGame extends Application {
         int rookStartCol = endCol > startCol ? 7 : 0;
         int rookEndCol = endCol > startCol ? endCol - 1 : endCol + 1;
 
-        String rookPiece = boardCurrent.get(rookStartCol, startRow);
-        ImageView rookView = imageViewMap.get(rookPiece);
-
-        gridPane.getChildren().remove(rookView);
-        gridPane.add(rookView, rookEndCol, startRow);
-
-        boardCurrent.set(rookStartCol, startRow,"null");
-        boardCurrent.set(rookEndCol, startRow, rookPiece);
+        String rookPiece = moveRook(startRow, rookStartCol, rookEndCol);
 
         Piece rook = pieces.get(rookPiece);
         if (rook != null) {
@@ -763,13 +739,12 @@ public class ChessGame extends Application {
     }
 
     private void handleEnPassant(int startCol, int startRow, int endCol, int endRow) {
-        int capturedPawnRow = startRow;
-        String capturedPawn = boardCurrent.get(endCol, capturedPawnRow);
+        String capturedPawn = boardCurrent.get(endCol, startRow);
         ImageView capturedPawnView = imageViewMap.get(capturedPawn);
 
         gridPane.getChildren().remove(capturedPawnView);
         imageViewMap.remove(capturedPawn);
-        boardCurrent.set(endCol, capturedPawnRow, "null");
+        boardCurrent.set(endCol, startRow, "null");
     }
 
 
@@ -897,16 +872,21 @@ public class ChessGame extends Application {
         int rookEndCol = isKingSide ? endCol - 1 : endCol + 1;
 
         // Move rook
+        String rookPiece = moveRook(startRow, rookStartCol, rookEndCol);
+
+        //Update rook's position and moved status
+        Rook rook = (Rook) pieces.get(rookPiece);
+        rook.handleCastlingMove(rookEndCol);
+    }
+
+    private String moveRook(int startRow, int rookStartCol, int rookEndCol) {
         String rookPiece = boardCurrent.get(rookStartCol, startRow);
         ImageView rookView = imageViewMap.get(rookPiece);
         gridPane.getChildren().remove(rookView);
         gridPane.add(rookView, rookEndCol, startRow);
         boardCurrent.set(rookStartCol, startRow,"null");
         boardCurrent.set(rookEndCol, startRow, rookPiece);
-
-        //Update rook's position and moved status
-        Rook rook = (Rook) pieces.get(rookPiece);
-        rook.handleCastlingMove(rookEndCol);
+        return rookPiece;
     }
 
     private void initializeGame() {
@@ -969,22 +949,8 @@ public class ChessGame extends Application {
         }
 
         //Check if any piece can block the check or capture the attacking piece
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            for (int row = 0; row < BOARD_SIZE; row++) {
-                String pieceKey = boardCurrent.get(col, row);
-                if (!pieceKey.equals("null") && pieceKey.contains(currentColor)) {
-                    Piece piece = pieces.get(pieceKey);
-                    if (piece != null) {
-                        for (int newCol = 0; newCol < BOARD_SIZE; newCol++) {
-                            for (int newRow = 0; newRow < BOARD_SIZE; newRow++) {
-                                if (simulateMoveProtectKing(piece, newCol, newRow)) {
-                                    return false; // Found a move that prevents checkmate
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+        if(hasNoLegalMoves()) {
+            return false;
         }
 
         // It's checkmate, show popup
@@ -1302,7 +1268,7 @@ public class ChessGame extends Application {
     private void playMoveSound() {
         try {
             String soundFile = "/move_sound.wav";
-            Media sound = new Media(getClass().getResource(soundFile).toExternalForm());
+            Media sound = new Media(Objects.requireNonNull(getClass().getResource(soundFile)).toExternalForm());
             MediaPlayer mediaPlayer = new MediaPlayer(sound);
             mediaPlayer.play();
 
