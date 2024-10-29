@@ -356,7 +356,7 @@ public class ChessGame extends Application {
         }
 
         try {
-            String fen = boardToFEN();
+            String fen = boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves);
             engine.sendCommand("position fen " + fen);
             engine.sendCommand("go depth " + stockfishDepth); //Use the selected depth
 
@@ -366,139 +366,6 @@ public class ChessGame extends Application {
         } catch (IOException e) {
             e.printStackTrace();
         }
-    }
-    ///fen rnbkqbnr/pppppppp/8/8/8/4P3/PPPP1PPP/RNBQKBNR b KQkq - 0 1
-//lowercase = black, uppercase = white
-//rnbkqbnr: Black's back rank
-//pppppppp: Black's pawns
-//8: An entire empty rank
-//8: Another empty rank
-//8: A third empty rank
-//4P3: Four empty squares, White pawn, three empty squares
-//PPPP1PPP: White's pawns with one space (where the pawn moved from)
-//RNBQKBNR: White's back rank
-    private String boardToFEN() {
-        StringBuilder fen = new StringBuilder();
-        int emptyCount = 0;
-
-        //Piece placement
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            for (int col = 0; col < BOARD_SIZE; col++) {
-                String piece = boardCurrent.get(col, row);
-                if (piece.equals("null")) {
-                    emptyCount++;
-                } else {
-                    if (emptyCount > 0) {
-                        fen.append(emptyCount);
-                        emptyCount = 0;
-                    }
-                    fen.append(pieceToFenChar(piece));
-                }
-            }
-            if (emptyCount > 0) {
-                fen.append(emptyCount);
-                emptyCount = 0;
-            }
-            if (row < BOARD_SIZE - 1) {
-                fen.append("/");
-            }
-        }
-
-        //Active color
-        fen.append(isWhiteTurn ? " w " : " b ");
-
-        //Castling availability
-        String castling = getCastlingRights();
-        fen.append(castling.isEmpty() ? "-" : castling).append(" ");
-
-//Castling Availability (KQkq):
-//Indicates which sides can still castle.
-//K: White can castle kingside
-//Q: White can castle queenside
-//k: Black can castle kingside
-//q: Black can castle queenside
-//If no castling is available, this would be -.
-
-
-        //En passant target square
-        fen.append(getEnPassantSquare()).append(" ");
-
-
-        //En Passant Target Square (-):
-        //Indicates if an en passant capture is possible.
-        // - means no en passant is possible.
-        //If a pawn had just moved two squares, this would show
-        //the square "behind" the pawn (e.g., e3 for a white
-        //pawn that just moved to e4).
-
-
-        // Halfmove clock and fullmove number
-        fen.append("0 1");
-        //Used for the fifty-move rule (game can be claimed as
-        //drawn if no pawn has moved and no piece has
-        //been captured in the last 50 moves).
-
-//Halfmove Clock:
-//Counts the number of halfmoves since the last pawn move or capture.
-//Used to enforce the fifty-move rule in chess.
-//Resets to 0 when a pawn moves or a piece is captured.
-
-
-//Fullmove Number:
-//Represents the number of completed full turns in the game.
-//fen.append("0 1");), always setting 0 and 1
-//For accurate FEN,  need to implement counters that track these values
-
-
-
-
-        return fen.toString();
-    }
-
-    private char pieceToFenChar(String piece) {
-        char fenChar = switch (piece.replaceAll("\\d", "").replace("white", "").replace("black", "")) {
-            case "king" -> 'k';
-            case "queen" -> 'q';
-            case "rook" -> 'r';
-            case "bishop" -> 'b';
-            case "knight" -> 'n';
-            case "pawn" -> 'p';
-            default -> '.';
-        };
-        return piece.contains("white") ? Character.toUpperCase(fenChar) : fenChar;
-    }
-
-    private boolean hasKingMoved(String color) {
-        King king = (King) pieces.get("king1" + color);
-        return king != null && king.hasMoved();
-    }
-
-    private boolean hasRookMoved(String color, String side) {
-        int rookCol = side.equals("kingside") ? 7 : 0;
-        int rookRow = color.equals("white") ? 7 : 0;
-        Piece rook = pieces.get(boardCurrent.get(rookCol, rookRow));
-        return !(rook instanceof Rook) || rook.hasMoved();
-    }
-
-    private String getCastlingRights() {
-        StringBuilder rights = new StringBuilder();
-        if (!hasKingMoved("white") && !hasRookMoved("white", "kingside")) rights.append("K");
-        if (!hasKingMoved("white") && !hasRookMoved("white", "queenside")) rights.append("Q");
-        if (!hasKingMoved("black") && !hasRookMoved("black", "kingside")) rights.append("k");
-        if (!hasKingMoved("black") && !hasRookMoved("black", "queenside")) rights.append("q");
-        return rights.toString();
-    }
-
-    //might not work
-    private String getEnPassantSquare() {
-        if (lastMoveWasDoublePawnMove) {
-            //Determine the en passant square based on the last move
-            //This is a simplified version; you might need to adjust based on your implementation
-            int col = lastPawnMoved.charAt(4) - '0';
-            int row = lastPawnMoved.contains("white") ? 5 : 2;
-            return "" + (char)('a' + col) + row;
-        }
-        return "-";
     }
 
     private String getBestMoveFromEngine() {

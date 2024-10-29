@@ -112,7 +112,11 @@ public class Board {
                 emptyTileCounter = 0;
             }
 
+            sb.append("/");
+
         }
+
+        sb.deleteCharAt(sb.length() - 1);
 
         if(isWhiteTurn) {
             sb.append(" w");
