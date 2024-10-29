@@ -1,13 +1,10 @@
+
+
 module me.chessCapstone {
-    requires javafx.controls;
-    requires javafx.fxml;
-    requires jdk.dynalink;
-    requires javafx.media;
-    requires java.desktop;
+        requires javafx.controls;
+        requires transitive javafx.graphics;
+        requires javafx.media;
+        requires transitive javafx.base;
 
-
-
-
-    opens me.chessCapstone to javafx.fxml;
-    exports me.chessCapstone;
-}
+        exports me.chessCapstone;
+        }
