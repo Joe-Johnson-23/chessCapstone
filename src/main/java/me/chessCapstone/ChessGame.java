@@ -152,7 +152,7 @@ public class ChessGame extends Application {
                         selectedPiece.setLayoutY(0);
                         Piece piece = pieces.get(boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW));
                         boolean validMove = false;
-                        ArrayList<Tile> threatenedSquares;
+
                         boardCurrent.resetTileColor();
 
                         // convert mouse coordinates to local Grid pane coordinates
@@ -792,7 +792,7 @@ public class ChessGame extends Application {
 
     private boolean isCheckmate() {
         King currentKing = isWhiteTurn ? whiteKing : blackKing;
-        String currentColor = isWhiteTurn ? "white" : "black";
+
         ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
 
         if (!currentKing.isInCheck(threatenedSquares)) {
