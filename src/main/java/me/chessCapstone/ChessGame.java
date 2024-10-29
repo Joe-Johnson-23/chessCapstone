@@ -326,6 +326,9 @@ public class ChessGame extends Application {
         if(isStalemate()) {
             handleStalemate();
         }
+        if(checkForDraw()) {
+            handleDraw();
+        }
         if (isCheckmate()) {
             //Handle checkmate
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
@@ -1037,6 +1040,21 @@ public class ChessGame extends Application {
     }
 
     private void handleThreefoldRepetition() {
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Draw");
+            alert.setHeaderText(null);
+            alert.setContentText("DRAW!");
+            alert.showAndWait();
+            handleGameEnd("Better luck next time!");
+        });
+    }
+
+    private boolean checkForDraw() {
+        return halfMoveClock == 50;
+    }
+
+    private void handleDraw() {
         Platform.runLater(() -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Draw");
