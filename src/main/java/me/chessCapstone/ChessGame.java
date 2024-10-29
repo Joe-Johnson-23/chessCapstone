@@ -319,16 +319,8 @@ public class ChessGame extends Application {
         calculateThreatenedSquares();
         updateCheckStatus();
 
+        checkForDraw();
 
-        if (checkForThreefoldRepetition()) {
-            handleThreefoldRepetition();
-        }
-        if(isStalemate()) {
-            handleStalemate();
-        }
-        if(checkForDraw()) {
-            handleDraw();
-        }
         if (isCheckmate()) {
             //Handle checkmate
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
@@ -1032,6 +1024,13 @@ public class ChessGame extends Application {
         return sb.toString();
     }
 
+    private void checkForDraw() {
+        boolean draw = checkForThreefoldRepetition() || halfMoveClock == 50 || isStalemate();
+        if(draw) {
+            handleDraw();
+        }
+    }
+
     private boolean checkForThreefoldRepetition() {
         String positionKey = getPositionKey();
         int count = positionCounts.getOrDefault(positionKey, 0) + 1;
@@ -1039,19 +1038,14 @@ public class ChessGame extends Application {
         return count >= 3;
     }
 
-    private void handleThreefoldRepetition() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Draw");
-            alert.setHeaderText(null);
-            alert.setContentText("DRAW!");
-            alert.showAndWait();
-            handleGameEnd("Better luck next time!");
-        });
-    }
-
-    private boolean checkForDraw() {
-        return halfMoveClock == 50;
+    //Stalemate
+    private boolean isStalemate() {
+        if (hasNoLegalMoves()) {
+            King currentKing = isWhiteTurn ? whiteKing : blackKing;
+            ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
+            return !currentKing.isInCheck(threatenedSquares);
+        }
+        return false;
     }
 
     private void handleDraw() {
@@ -1063,16 +1057,6 @@ public class ChessGame extends Application {
             alert.showAndWait();
             handleGameEnd("Better luck next time!");
         });
-    }
-
-    //Stalemate
-    private boolean isStalemate() {
-        if (hasNoLegalMoves()) {
-            King currentKing = isWhiteTurn ? whiteKing : blackKing;
-            ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
-            return !currentKing.isInCheck(threatenedSquares);
-        }
-        return false;
     }
 
     private boolean hasNoLegalMoves() {
@@ -1097,18 +1081,6 @@ public class ChessGame extends Application {
         }
         return true;
     }
-
-    private void handleStalemate() {
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Stalemate");
-            alert.setHeaderText(null);
-            alert.setContentText("STALEMATE!");
-            alert.showAndWait();
-            handleGameEnd("Better luck next time!");
-        });
-    }
-
 
     private void restartApplication(Stage currentStage) {
         Platform.runLater(() -> {
