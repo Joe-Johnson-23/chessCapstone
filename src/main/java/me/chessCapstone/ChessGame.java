@@ -69,6 +69,11 @@ public class ChessGame extends Application {
 
     private Stage primaryStage;
 
+    private boolean playAgainstSimpleAI = false;
+    private customAi simpleAI;
+
+
+
     @Override
     public void start(Stage primaryStage) {
         this.primaryStage = primaryStage;
@@ -338,7 +343,10 @@ public class ChessGame extends Application {
             } else {
                 System.err.println("Cannot make engine move: Chess engine is not initialized!");
             }
-        } else {
+        }  else if (!isWhiteTurn && playAgainstSimpleAI) {
+        makeSimpleAIMove();
+        switchTurn();
+    } else {
 
 
         }
@@ -940,7 +948,8 @@ public class ChessGame extends Application {
         ToggleGroup modeGroup = new ToggleGroup();
         ToggleButton oneVsOneButton = createModeButton("1 vs 1", modeGroup);
         ToggleButton stockfishButton = createModeButton("Play against Stockfish", modeGroup);
-        VBox modeBox = new VBox(20, oneVsOneButton, stockfishButton);
+        ToggleButton simpleAIButton = createModeButton("Play against Simple AI", modeGroup);
+        VBox modeBox = new VBox(20, oneVsOneButton, stockfishButton, simpleAIButton);
         modeBox.setAlignment(Pos.CENTER);
 
         //Difficulty selection (initially hidden)
@@ -965,9 +974,17 @@ public class ChessGame extends Application {
 
         stockfishButton.setOnAction(e -> {
             playAgainstStockfish = true;
+            playAgainstSimpleAI = false;
             modeBox.setVisible(false);
             difficultyBox.setVisible(true);
             popupStage.setTitle("Select Difficulty");
+        });
+
+        simpleAIButton.setOnAction(e -> {
+            playAgainstSimpleAI = true;
+            playAgainstStockfish = false;
+            simpleAI = new customAi(false); // AI plays as black
+            popupStage.close();
         });
 
         difficultyGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
@@ -1038,7 +1055,7 @@ public class ChessGame extends Application {
         return count >= 3;
     }
 
-    //Stalemate
+    //Stalemate ---------------------------
     private boolean isStalemate() {
         if (hasNoLegalMoves()) {
             King currentKing = isWhiteTurn ? whiteKing : blackKing;
@@ -1081,6 +1098,12 @@ public class ChessGame extends Application {
         }
         return true;
     }
+
+
+    //Stalemate ---------------------------
+
+
+
 
     private void restartApplication(Stage currentStage) {
         Platform.runLater(() -> {
@@ -1135,6 +1158,120 @@ public class ChessGame extends Application {
 
         }
     }
+
+
+
+
+
+    // customAI ---------------------------------------
+    // simple chess ai
+    private void makeSimpleAIMove() {
+        List<Move> legalMoves = getAllLegalMoves(false);
+        Move bestMove = null;
+        int bestScore = Integer.MIN_VALUE;
+        // int bestScore = Integer.MAX_VALUE;
+        System.out.println("\n=== AI Move Evaluation ===");
+
+        for (Move move : legalMoves) {
+            // Save current board state
+            String capturedPiece = boardCurrent.get(move.endCol, move.endRow);
+
+            // Make move
+            boardCurrent.set(move.endCol, move.endRow, move.piece);
+            boardCurrent.set(move.startCol, move.startRow, "null");
+
+            // Evaluate position after move
+            int score = simpleAI.evaluatePosition(boardCurrent, move);
+
+            // Print move details
+            System.out.printf("Move: %s from (%d,%d) to (%d,%d) - Score: %d %s%n",
+                    move.piece,
+                    move.startCol, move.startRow,
+                    move.endCol, move.endRow,
+                    score,
+                    score > bestScore ? " (New Best!)" : "");
+
+            if (!capturedPiece.equals("null")) {
+                System.out.println("  -> Captures: " + capturedPiece);
+            }
+
+            // Restore board state
+            boardCurrent.set(move.startCol, move.startRow, move.piece);
+            boardCurrent.set(move.endCol, move.endRow, capturedPiece);
+
+            // Update best move
+            // if (score < bestScore) {
+            if (score > bestScore) {
+                bestScore = score;
+                bestMove = move;
+            }
+        }
+
+        System.out.println("\nSelected Move:");
+        System.out.printf("Piece: %s from (%d,%d) to (%d,%d) with score: %d%n%n",
+                bestMove.piece,
+                bestMove.startCol, bestMove.startRow,
+                bestMove.endCol, bestMove.endRow,
+                bestScore);
+
+        applyMove(bestMove);
+    }
+
+
+
+    //   method to get all legal moves
+    private List<Move> getAllLegalMoves(boolean forWhite) {
+        List<Move> legalMoves = new ArrayList<>();
+
+        for (int startRow = 0; startRow < BOARD_SIZE; startRow++) {
+            for (int startCol = 0; startCol < BOARD_SIZE; startCol++) {
+                String piece = boardCurrent.get(startCol, startRow);
+                if (!piece.equals("null") && piece.contains(forWhite ? "white" : "black")) {
+                    for (int endRow = 0; endRow < BOARD_SIZE; endRow++) {
+                        for (int endCol = 0; endCol < BOARD_SIZE; endCol++) {
+                            if (simulateMoveProtectKing(pieces.get(piece), endCol, endRow)) {
+                                legalMoves.add(new Move(startCol, startRow, endCol, endRow, piece));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        return legalMoves;
+    }
+
+    // method to apply a move
+    private void applyMove(Move move) {
+        String capturedPiece = boardCurrent.get(move.endCol, move.endRow);
+
+        // Handle capture
+        if (!capturedPiece.equals("null")) {
+            ImageView capturedPieceView = imageViewMap.get(capturedPiece);
+            gridPane.getChildren().remove(capturedPieceView);
+            imageViewMap.remove(capturedPiece);
+        }
+
+        // Move the piece
+        ImageView movingPieceView = imageViewMap.get(move.piece);
+        gridPane.getChildren().remove(movingPieceView);
+        gridPane.add(movingPieceView, move.endCol, move.endRow);
+
+        // Update board state
+        boardCurrent.set(move.startCol, move.startRow, "null");
+        boardCurrent.set(move.endCol, move.endRow, move.piece);
+
+        // Update piece position
+        Piece piece = pieces.get(move.piece);
+        piece.setCol(move.endCol);
+        piece.setRow(move.endRow);
+        piece.setMoved(true);
+    }
+
+    // customAI ---------------------------------------
+
+
+
 
 
 
