@@ -344,9 +344,9 @@ public class ChessGame extends Application {
                 System.err.println("Cannot make engine move: Chess engine is not initialized!");
             }
         }  else if (!isWhiteTurn && playAgainstSimpleAI) {
-        makeSimpleAIMove();
-        switchTurn();
-    } else {
+            makeSimpleAIMove();
+            switchTurn();
+        } else {
 
 
         }
@@ -800,27 +800,16 @@ public class ChessGame extends Application {
 
     private boolean isCheckmate() {
         King currentKing = isWhiteTurn ? whiteKing : blackKing;
-        String currentColor = isWhiteTurn ? "white" : "black";
         ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
 
+        // First check if king is in check
         if (!currentKing.isInCheck(threatenedSquares)) {
             return false;
         }
 
-
-
-        //Check if the king can move away
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            for (int row = 0; row < BOARD_SIZE; row++) {
-                if (simulateMoveProtectKing(currentKing, col, row)) {
-                    return false; // King can escape, not checkmate
-                }
-            }
-        }
-
-        //Check if any piece can block the check or capture the attacking piece
-        if(hasNoLegalMoves()) {
-            return false;
+        // Check if any piece (including the king) can make a legal move
+        if (!hasNoLegalMoves()) {  // This was the issue - we were returning false when there were no legal moves
+            return false;  // If there ARE legal moves, it's not checkmate
         }
 
         // It's checkmate, show popup
