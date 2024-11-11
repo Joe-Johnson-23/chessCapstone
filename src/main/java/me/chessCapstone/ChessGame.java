@@ -156,8 +156,7 @@ public class ChessGame extends Application {
                         selectedPiece.setLayoutX(0);
                         selectedPiece.setLayoutY(0);
                         Piece piece = pieces.get(boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW));
-                        boolean validMove = false;
-                        ArrayList<Tile> threatenedSquares;
+                        boolean validMove;
                         boardCurrent.resetTileColor();
 
                         // convert mouse coordinates to local Grid pane coordinates
@@ -329,6 +328,7 @@ public class ChessGame extends Application {
         if (isCheckmate()) {
             //Handle checkmate
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
+            return;
         }
 
 
@@ -346,10 +346,8 @@ public class ChessGame extends Application {
         }  else if (!isWhiteTurn && playAgainstSimpleAI) {
             makeSimpleAIMove();
             switchTurn();
-        } else {
-
-
         }
+
     }
 
     private void makeEngineMove() {
@@ -645,6 +643,7 @@ public class ChessGame extends Application {
             String newPieceName = newPieceType + globalCountForPromotion+ (isWhite ? "white" : "black");
             String newColor = (isWhite ? "white" : "black");
             Piece promotedPiece = createPiece(newPieceType, isWhite ? "white" : "black");
+            assert promotedPiece != null;
             ImageView promotedPieceView = promotedPiece.getPiece();
 
 
