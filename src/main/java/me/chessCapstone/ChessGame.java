@@ -24,6 +24,9 @@ import javafx.scene.control.ChoiceDialog;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyCodeCombination;
+import javafx.scene.input.KeyCombination;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
@@ -72,6 +75,12 @@ public class ChessGame extends Application {
 
     private boolean playAgainstSimpleAI = false;
     private customAi simpleAI;
+
+    // secret mode, stockfish vs stockfish, shift + 7
+    private boolean secretMode = false;
+    private static final KeyCombination SECRET_COMBO = new KeyCodeCombination(
+            KeyCode.DIGIT7, KeyCombination.SHIFT_DOWN
+    );
 
 
 
@@ -300,8 +309,28 @@ public class ChessGame extends Application {
         }
 
         primaryStage.setOnCloseRequest(event -> {
-            event.consume(); // Prevent the window from closing immediately
+            event.consume();
             shutdown();
+        });
+
+
+        scene.setOnKeyPressed(event -> {
+            if (SECRET_COMBO.match(event)) {
+                secretMode = !secretMode;
+                String message = secretMode ? "Secret Mode Activated: Stockfish vs Stockfish"
+                        : "Secret Mode Deactivated";
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Secret Mode");
+                alert.setHeaderText(null);
+                alert.setContentText(message);
+                alert.showAndWait();
+                if (secretMode && isWhiteTurn) {
+                    //to move if activated during white's turn
+                    makeEngineMove();
+                    switchTurn();
+                }
+            }
         });
     }
 
@@ -317,34 +346,35 @@ public class ChessGame extends Application {
     private void switchTurn() {
 
 
+
         isWhiteTurn = !isWhiteTurn;
         boardCurrent.printBoardState();
         playMoveSound();
 
-        //Updates King's square for check (red square)
+
         calculateThreatenedSquares();
         updateCheckStatus();
 
         checkForDraw();
 
         if (isCheckmate()) {
-            //Handle checkmate
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
         }
 
 
 
-        if (!isWhiteTurn && playAgainstStockfish) {
-            if (engine != null) {
-                makeDelayedMove(() -> {
-                    makeEngineMove();
-                    switchTurn();
-                });
-            } else {
-                System.err.println("Cannot make engine move: Chess engine is not initialized!");
+        if (playAgainstStockfish) {
+            if (!isWhiteTurn || secretMode) {
+                if (engine != null) {
+                    makeDelayedMove(() -> {
+                        makeEngineMove();
+                        switchTurn();
+                    });
+                } else {
+                    System.err.println("Cannot make engine move: Chess engine is not initialized!");
+                }
             }
-        }  else if (!isWhiteTurn && playAgainstSimpleAI) {
-
+        } else if (!isWhiteTurn && playAgainstSimpleAI) {
             makeDelayedMove(() -> {
                 makeSimpleAIMove();
                 switchTurn();
@@ -365,20 +395,32 @@ public class ChessGame extends Application {
 
 
     private void makeEngineMove() {
+
+
         if (engine == null) {
             System.err.println("Chess engine is not initialized!");
             return;
         }
 
         try {
+            //current board state to FEN notation
             String fen = boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves);
+            //commands to Stockfish engine
             engine.sendCommand("position fen " + fen);
-            engine.sendCommand("go depth " + stockfishDepth); //Use the selected depth
 
+            //different depth for secret mode
+            int depth = stockfishDepth;
+            if (secretMode) {
+                depth = isWhiteTurn ? stockfishDepth + 5 : stockfishDepth ; // Make black slightly weaker
+            }
+            engine.sendCommand("go depth " + depth);
+
+            //get then apply the calculated move
             String bestMove = getBestMoveFromEngine();
             applyEngineMove(bestMove);
 
         } catch (IOException e) {
+            System.err.println("Error communicating with chess engine: " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -386,21 +428,18 @@ public class ChessGame extends Application {
     private String getBestMoveFromEngine() {
         try {
             String line;
-            //Keep reading lines from the engine output
             while ((line = engine.readLine()) != null) {
-                // Check if the line starts with "bestmove"
                 if (line.startsWith("bestmove")) {
                     //Split the line by whitespace and return the second word
-                    //The format is typically "bestmove e2e4 ponder e7e5"
-                    //So we're extracting just the "e2e4" part
+                    //"bestmove g1f3 ponder xxxx"
+                    //thus, get the "g1f3"
                     return line.split("\\s+")[1];
                 }
             }
         } catch (IOException e) {
-            //If there's an error reading from the engine, print the stack trace
             e.printStackTrace();
         }
-        //If we've read all lines without finding a best move, return null
+        //if no best move, return null
         return null;
     }
 
