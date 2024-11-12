@@ -10,6 +10,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 
+import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Application;
 import javafx.application.Platform;
@@ -334,23 +335,34 @@ public class ChessGame extends Application {
 
 
         if (!isWhiteTurn && playAgainstStockfish) {
-
             if (engine != null) {
-
-                makeEngineMove();
-
-                switchTurn(); //Switch back to white's turn
+                makeDelayedMove(() -> {
+                    makeEngineMove();
+                    switchTurn();
+                });
             } else {
                 System.err.println("Cannot make engine move: Chess engine is not initialized!");
             }
         }  else if (!isWhiteTurn && playAgainstSimpleAI) {
-            makeSimpleAIMove();
-            switchTurn();
+
+            makeDelayedMove(() -> {
+                makeSimpleAIMove();
+                switchTurn();
+            });
         } else {
 
 
         }
     }
+
+    private void makeDelayedMove(Runnable action) {
+        Platform.runLater(() -> {
+            PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
+            pause.setOnFinished(event -> action.run());
+            pause.play();
+        });
+    }
+
 
     private void makeEngineMove() {
         if (engine == null) {
