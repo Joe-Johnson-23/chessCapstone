@@ -320,13 +320,15 @@ public class ChessGame extends Application {
                 String message = secretMode ? "Secret Mode Activated: Stockfish vs Stockfish"
                         : "Secret Mode Deactivated";
 
+
+
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Secret Mode");
                 alert.setHeaderText(null);
                 alert.setContentText(message);
                 alert.showAndWait();
                 if (secretMode && isWhiteTurn) {
-                    //to move if activated during white's turn
+
                     makeEngineMove();
                     switchTurn();
                 }
@@ -348,17 +350,20 @@ public class ChessGame extends Application {
 
 
         isWhiteTurn = !isWhiteTurn;
-        boardCurrent.printBoardState();
+        //boardCurrent.printBoardState();
         playMoveSound();
 
 
         calculateThreatenedSquares();
         updateCheckStatus();
 
-        checkForDraw();
+        if(checkForDraw()){
+            return;
+        };
 
         if (isCheckmate()) {
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
+            return;
         }
 
 
@@ -539,8 +544,8 @@ public class ChessGame extends Application {
         boolean whiteInCheck = whiteKing.isInCheck(squaresThreatenedByBlack);
         boolean blackInCheck = blackKing.isInCheck(squaresThreatenedByWhite);
 
-        System.out.println("White in check: " + whiteInCheck);
-        System.out.println("Black in check: " + blackInCheck);
+        // System.out.println("White in check: " + whiteInCheck);
+        // System.out.println("Black in check: " + blackInCheck);
 
         //Update white king's tile
         updateKingTileColor(whiteKing, whiteInCheck, lastWhiteKingPos);
@@ -961,7 +966,7 @@ public class ChessGame extends Application {
 
         Path stockfishPath = initializeStockfishPath(stockfishRelativePath);
 
-        System.out.println("Stockfish path: " + stockfishPath);
+        //System.out.println("Stockfish path: " + stockfishPath);
 
         engine = new ChessEngine(stockfishPath.toString());
     }
@@ -1081,11 +1086,12 @@ public class ChessGame extends Application {
         return sb.toString();
     }
 
-    private void checkForDraw() {
+    private boolean checkForDraw() {
         boolean draw = checkForThreefoldRepetition() || halfMoveClock == 50 || isStalemate();
         if(draw) {
             handleDraw();
         }
+        return draw;
     }
 
     private boolean checkForThreefoldRepetition() {
