@@ -1214,7 +1214,8 @@ public class ChessGame extends Application {
         for (int startRow = 0; startRow < BOARD_SIZE; startRow++) {
             for (int startCol = 0; startCol < BOARD_SIZE; startCol++) {
                 String piece = boardCurrent.get(startCol, startRow);
-                if (!piece.equals("null") && piece.contains(forWhite ? "white" : "black")) {
+                //Condition '!piece. equals(...)' covered by subsequent condition 'piece. contains(...)'
+                if (piece.contains(forWhite ? "white" : "black")) {
                     for (int endRow = 0; endRow < BOARD_SIZE; endRow++) {
                         for (int endCol = 0; endCol < BOARD_SIZE; endCol++) {
                             if (simulateMoveProtectKing(pieces.get(piece), endCol, endRow)) {

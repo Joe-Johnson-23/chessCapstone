@@ -2,20 +2,27 @@ package me.chessCapstone;
 
 public class Bishop extends Piece {
 
+    //Constructor for a Bishop object. Requires a String representation of color.
     public Bishop(String color) {
+        //Passes the type alongside the color to the superclass, Piece.
         super("bishop", color);
     }
 
-public boolean isValidBishopMove(int endCol, int endRow, String[][] boardCurrent) {
-    int colDiff = Math.abs(endCol - getCol());
-    int rowDiff = Math.abs(endRow - getRow());
+    //Given a target column and row, this method ensures that the target is valid given Bishop movement rules.
+    public boolean isValidBishopMove(int endCol, int endRow, String[][] boardCurrent) {
 
-    if (colDiff == rowDiff) {
-        return isPathClear(endCol, endRow, boardCurrent);
+        //Finds the difference between the target square and current square.
+        int colDiff = Math.abs(endCol - getCol());
+        int rowDiff = Math.abs(endRow - getRow());
+
+        //Since a Bishop can only move diagonally, the difference in the column and row must equal each other, else it is not a diagonal move, violating Bishop movement rules.
+        if (colDiff == rowDiff) {
+            //If Bishop movement rules are followed, the path is then checked.
+            return isPathClear(endCol, endRow, boardCurrent);
+        }
+        //If the Bishop movement rules are broken, it returns false.
+        return false;
     }
-
-    return false;
-}
 
 }
 
