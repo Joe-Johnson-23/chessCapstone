@@ -2,12 +2,15 @@ package me.chessCapstone;
 
 public class Queen extends Piece {
 
+    //Constructor for a Queen object. Requires a String representation of color.
     public Queen(String color) {
+        //Passes the type alongside the color to the superclass, Piece.
         super("queen", color);
     }
 
-
+    //Given a target column and row, this method ensures that the target is valid given Queen movement rules.
     public boolean isValidQueenMove(int endCol, int endRow, String[][] boardCurrent) {
+
         int colDiff = Math.abs(endCol - getCol());
         int rowDiff = Math.abs(endRow - getRow());
 
