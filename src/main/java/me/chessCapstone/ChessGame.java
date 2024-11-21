@@ -859,15 +859,26 @@ public class ChessGame extends Application {
         });
     }
 
+    //This method calculates the squares that are being threatened.
     private void calculateThreatenedSquares() {
+
+        //Reset both ArrayLists before adding new squares.
         squaresThreatenedByWhite.clear();
         squaresThreatenedByBlack.clear();
 
+        //Iterate through the board to find all Pieces remaining.
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
+                
+                //Pass the String key into the Pieces HashMap.
                 Piece piece = pieces.get(boardCurrent.get(col, row));
+                
+                //If the key returns a piece, we calculate the squares it currently threatens.
                 if (piece != null) {
+                    //Place the returned ArrayList into threatenedSquares.
                     ArrayList<Tile> threatenedSquares = piece.findThreatenedSquares(boardCurrent.getBoard());
+
+                    //Append threatenedSquares to the appropriate ArrayList, given color.
                     if (piece.getColor().equals("white")) {
                         squaresThreatenedByWhite.addAll(threatenedSquares);
                     } else {
@@ -878,52 +889,83 @@ public class ChessGame extends Application {
         }
     }
 
+    //This method instantiates and places the needed Pieces on the board.
     private void setUpPieces(GridPane gridPane) {
 
-
+        //Array of pieces each side begins with, all in order.
         String[] pieceList = {"rook1", "knight1", "bishop1", "queen1", "king1", "bishop2", "knight2", "rook2",
                 "pawn0", "pawn1", "pawn2", "pawn3", "pawn4", "pawn5", "pawn6", "pawn7"};
 
+        //Array of colors.
         String[] colors = {"black", "white"};
 
         int row = 0, col = 0;
 
+        //Iterate through the colors Array.
         for (String color : colors) {
 
+            //Iterate through the pieceList Array in order to instantiate all the Pieces needed.
             for (String piece : pieceList) {
 
+                //If column equals 8, that means we've reached the end of the column.
                 if (col == 8) {
+                    //If row equals 1, that means that all White Pieces have been instantiated.
+                    //We must set row to 7 to begin instantiating Black Pieces.
                     if (row == 1) {
                         row = 7;
-                    } else if (row == 7) {
+                    } 
+                    //If row equals 7, we just finished the first row of Black Pieces.
+                    //We must go to row 6 to instantiate the final row of Black Pieces.
+                    else if (row == 7) {
                         row--;
-                    } else {
+                    }
+                    //Otherwise, we simply increment the row.
+                    //This case occurs when we are done instantiating the first row of White Pieces.
+                    else {
                         row++;
                     }
+                    //Column must be reset in order to continue iteration.
                     col = 0;
                 }
 
+                //If the end of a row has not been reached, a new Piece is instantiated.
                 Piece nextPiece = createPiece(piece, color);
+                
+                //The key for the Piece is created based on which Piece, what number as well as what color it is.
                 String typeColor = piece + color;
+                
+                //Place the new Piece in the pieces HashMap for easy access.
                 pieces.put(typeColor, nextPiece);
+                
+                //Place the String key for the Piece in the board.
                 boardCurrent.set(col, row, typeColor);
+
+                //Set the column and row in the Piece object.
                 assert nextPiece != null;
                 nextPiece.setCol(col);
                 nextPiece.setRow(row);
+
+                //Add the ImageView of the Piece to the gridpane.
                 gridPane.add(nextPiece.getPiece(), col, row);
+
+                //Add the ImageView of the Piece to a HashMap.
                 imageViewMap.put(typeColor, nextPiece.getPiece());
+
+                //Increment the column to continue iteration.
                 col++;
-
             }
-
         }
-
     }
 
+    //This method instantiates a new Piece object.
     private Piece createPiece(String type, String color) {
 
+        //Removes the appended digit.
+        //The digit occurs due to the need to differentiate between multiple Pieces.
+        //Ex. pawn1, pawn 2, etc.
         type = type.replaceAll("\\d", "");
 
+        //Creates the object based on the type and color.
         return switch (type) {
             case "king" -> new King(color);
             case "queen" -> new Queen(color);
@@ -931,6 +973,7 @@ public class ChessGame extends Application {
             case "bishop" -> new Bishop(color);
             case "rook" -> new Rook(color);
             case "pawn" -> new Pawn(color);
+            //If the given String does not match any case, null is returned and no object is created.
             default -> null;
         };
     }
