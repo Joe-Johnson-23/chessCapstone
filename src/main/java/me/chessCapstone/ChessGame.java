@@ -38,17 +38,18 @@ import javafx.util.Duration;
 
 public class ChessGame extends Application {
 
-    private ArrayList<Tile> squaresThreatenedByWhite = new ArrayList<>(), squaresThreatenedByBlack = new ArrayList<>();
-    private HashMap<String, Piece> pieces = new HashMap<>();
-    private Board boardCurrent;
-    private ImageView selectedPiece = null;
-    private GridPane gridPane;
-    private static final int TILE_SIZE = 100, BOARD_SIZE = 8;
-    private int initialPieceCoordinateROW, initialPieceCoordinateCOL;
-    private boolean isWhiteTurn = true;
+    private ArrayList<Tile> squaresThreatenedByWhite = new ArrayList<>(), squaresThreatenedByBlack = new ArrayList<>(); //List of tiles threatened by white and black pieces
+    private HashMap<String, Piece> pieces = new HashMap<>(); //Map containing all chess pieces by type
+
+    private Board boardCurrent; //Current state of chessboard
+    private ImageView selectedPiece = null; //Currently selected piece being moved
+    private GridPane gridPane;  //GridPane used to render the chessboard
+    private static final int TILE_SIZE = 100, BOARD_SIZE = 8;   //Size of each tile and the board dimensions
+    private int initialPieceCoordinateROW, initialPieceCoordinateCOL;   //Initial coordinates of the selected piece
+    private boolean isWhiteTurn = true; //Tracks whether it is white's turn
 
     ///stockfish_______________________________________________________stockfish
-    private ChessEngine engine;
+    private ChessEngine engine; //Stockfish chess engine
 
 
 
@@ -57,26 +58,27 @@ public class ChessGame extends Application {
     //if not 'queenwhite' will be made upon promotion instead of "queen3white"
     //problem occurs if multiple pawns promote to queen (ie, "queenwhite" then "queenwhite")
     //thus need global for now
-    int globalCountForPromotion = 2;
+    int globalCountForPromotion = 2;    //Counter to create unique piece ID's for pawn promotion(special rules)
 
-    static boolean lastMoveWasDoublePawnMove = false;
-    static String lastPawnMoved = "";
-    static boolean EnPassantPossible = false;
+
+    static boolean lastMoveWasDoublePawnMove = false;   //Variable for En passant(special rules)
+    static String lastPawnMoved = "";   //Variable for En passant(special rules)
+    static boolean EnPassantPossible = false;   //Variable for En passant(special rules)
     /////////////////////////////// GLOBAL VARIABLES ///////////////////////////////
-    private Map<String, ImageView> imageViewMap = new HashMap<>();
-    private Map<String, Integer> positionCounts = new HashMap<>();
-    private int[] lastWhiteKingPos = new int[2], lastBlackKingPos = new int[2];
-    private King whiteKing,  blackKing;
-    private Tile enPassantTile = new Tile(-1, -1);
-    private int halfMoveClock = 0, numberOfMoves = 1, stockfishDepth = 5;;
-    private boolean playAgainstStockfish = false;
+    private Map<String, ImageView> imageViewMap = new HashMap<>();  //Maps for associating piece IDs with images
+    private Map<String, Integer> positionCounts = new HashMap<>();   //Maps for associating piece IDs with counting piece positions
+    private int[] lastWhiteKingPos = new int[2], lastBlackKingPos = new int[2]; //Last positions of both white and black kings for check validation
+    private King whiteKing,  blackKing; //Both white and black king
+    private Tile enPassantTile = new Tile(-1, -1);  //En passant tile
+    private int halfMoveClock = 0, numberOfMoves = 1, stockfishDepth = 5;;  //StockFish
+    private boolean playAgainstStockfish = false;   //Indicate whether or not to play against stockfish
 
     private Stage primaryStage;
 
-    private boolean playAgainstSimpleAI = false;
+    private boolean playAgainstSimpleAI = false;    //Indicate whether or not to play against simple AI
     private customAi simpleAI;
 
-    // secret mode, stockfish vs stockfish, shift + 7
+    //Secret mode activation for play against Stockfish (stockfish vs stockfish) : shift + 7
     private boolean secretMode = false;
     private static final KeyCombination SECRET_COMBO = new KeyCodeCombination(
             KeyCode.DIGIT7, KeyCombination.SHIFT_DOWN
@@ -84,14 +86,21 @@ public class ChessGame extends Application {
 
 
 
+    //Main entry for the JavaFx application.
+    //Initializes the chess game and sets up the GUI
+    //The primary stage for this application, onto which the application scene is set
     @Override
     public void start(Stage primaryStage) {
+        //Primary stage to global variable
         this.primaryStage = primaryStage;
+        //Initialize the GridPane for chess board
         gridPane = new GridPane();
+        //Create the chess board state GridPane
         boardCurrent = new Board(gridPane);
+        //Initialize and place pieces on the board
         setUpPieces(gridPane);
 
-        // 배열 초기화
+        //Initialize empty tiles on the board
         for (int row = 0; row < BOARD_SIZE; row++) {
             for (int col = 0; col < BOARD_SIZE; col++) {
                 if (boardCurrent.get(col, row) == null) {
@@ -100,32 +109,38 @@ public class ChessGame extends Application {
             }
         }
 
-        //just to initialize kings to their respective variables in the boardCurrent
+        //Just to initialize kings to their respective variables in the boardCurrent
         initializeGame();
 
+        //Mouse pressed : selects a piece and highlight its valid moves
         gridPane.setOnMousePressed(event -> {
+            //Calculate tile coordinates based on mouse position
             int col = (int) (event.getSceneX() / TILE_SIZE);
             int row = (int) (event.getSceneY() / TILE_SIZE);
             initialPieceCoordinateCOL = col;
             initialPieceCoordinateROW = row;
 
+            //Get the type of piece at the selected tile
             String typeOfPiece = boardCurrent.get(col, row);
             Piece piece = pieces.get(typeOfPiece);
             ArrayList<Tile> threatenedSquares;
+            //Update threatened squares for both sides
             calculateThreatenedSquares();
 
+            //Verify if the selected piece belongs to the current player
             if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
                 selectedPiece = imageViewMap.get(typeOfPiece);
 
 
-
+                //If a piece is selected, store the initial mouse position and bring the piece to the front
                 if (selectedPiece != null) {
-                    // Store the initial mouse position
+                    //Store the initial mouse position
                     selectedPiece.setUserData(new Point2D(event.getSceneX(), event.getSceneY()));
-                    // Bring the selected piece to the front
+                    //Bring the selected piece to the front
                     selectedPiece.toFront();
                 }
 
+                //Check if the piece belongs to the current players turn
                 if(isWhiteTurn) {
                     threatenedSquares = squaresThreatenedByBlack;
                 } else {
@@ -133,72 +148,85 @@ public class ChessGame extends Application {
                 }
 
 
-
+                //Highlight the valid moves for the selected piece
                 piece.highlightValidMoves(boardCurrent.getStiles(), boardCurrent.getBoard(), threatenedSquares, this);
 
             }
         });
 
+        //Create the amin scene with the chess board
         Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
 
+        //Mouse dragged : moves the selected piece
         scene.setOnMouseDragged(event -> {
             if (selectedPiece != null) {
+                //Calucate the drag distance based on initial mouse position
                 Point2D initialPos = (Point2D) selectedPiece.getUserData();
                 double deltaX = event.getSceneX() - initialPos.getX();
                 double deltaY = event.getSceneY() - initialPos.getY();
+                //Apply the piece's position
                 selectedPiece.setTranslateX(deltaX);
                 selectedPiece.setTranslateY(deltaY);
             }
         });
 
+        //Mouse released : places the piece and updates the board
         scene.setOnMouseReleased(event -> {
             if (selectedPiece != null) {
-                // Reset the translation
+                //Reset the translation
                 selectedPiece.setTranslateX(0);
                 selectedPiece.setTranslateY(0);
 
+                //Get the type of piece at the original location
                 String typeOfPiece = boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW);
-                //checking whose turn, in case of wrong click
+                //Checking whose turn, in case of wrong click
                 if ((isWhiteTurn && typeOfPiece.contains("white")) || (!isWhiteTurn && typeOfPiece.contains("black"))) {
 
                     if (selectedPiece != null) {
 
+                        //Reset teh layout position of the piece
                         selectedPiece.setLayoutX(0);
                         selectedPiece.setLayoutY(0);
+                        //Find the piece from the map using its type
                         Piece piece = pieces.get(boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW));
                         boolean validMove = false;
                         ArrayList<Tile> threatenedSquares;
+                        //Reset the board tile colors
                         boardCurrent.resetTileColor();
 
-                        // convert mouse coordinates to local Grid pane coordinates
+                        //Convert mouse coordinates to local Grid pane coordinates
                         Point2D localPoint = gridPane.sceneToLocal(event.getSceneX(), event.getSceneY());
                         double x = localPoint.getX();
                         double y = localPoint.getY();
 
+                        //Determine the destination of column and row
                         int col = (int) (x / TILE_SIZE);
                         int row = (int) (y / TILE_SIZE);
 
+                        //Check if the move is within the board boundaries
                         if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
 
+                            //Remove digits from the piece type to get its name
                             String pieceType = typeOfPiece.replaceAll("\\d", "");
 
-                            //checks if any possible move is valid in regard to check
+                            //Checks if any possible move is valid in regard to check
                             validMove = simulateMoveProtectKing(piece, col, row);
 
                             if (validMove) {
-                                //Check for castling
+                                //Check for castling(special moves)
                                 if (pieceType.contains("king") && Math.abs(col - initialPieceCoordinateCOL) == 2) {
                                     King king = (King) piece;
                                     if (king.isCastlingValid(col, boardCurrent.getBoard(), isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite)) {
                                         handleCastling(initialPieceCoordinateCOL, initialPieceCoordinateROW, col, row);
                                     } else {
-                                        // Invalid castling, return king to original position
+                                        //Invalid castling, return king to original position
                                         gridPane.getChildren().remove(selectedPiece);
                                         gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                                         return;
                                     }
                                 }
 
+                                //Handle pawn special movement "pawn promotion"
                                 if (pieceType.contains("pawn")) {
                                     handlePawnMove(pieceType, row, initialPieceCoordinateROW, col);
                                 }
@@ -206,24 +234,29 @@ public class ChessGame extends Application {
                                 //Move from current position to new spot
                                 gridPane.getChildren().remove(selectedPiece);
                                 gridPane.add(selectedPiece, col, row);
+                                //Update the piece's column
                                 piece.setCol(col);
+                                //update the piece's row
                                 piece.setRow(row);
 
-                                // update boardCurrent
+                                //Update board state
                                 String currentPiece = boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW);
-                                // String destinationPiece = boardCurrent[col][row];
 
-                                //to capture piece.
+                                //To capture piece.
                                 String toBeRemoved = boardCurrent.get(col, row);
                                 if (!toBeRemoved.equals("null")) {
+                                    //Remove captured piece image
                                     gridPane.getChildren().remove(imageViewMap.get(toBeRemoved));
+                                    //Remove captured piece from the map
                                     imageViewMap.remove(toBeRemoved);
                                 }
 
+                                //Clear old position
                                 boardCurrent.set(initialPieceCoordinateCOL, initialPieceCoordinateROW,"null");
+                                //Set new position
                                 boardCurrent.set(col, row, currentPiece);
 
-                                //check and handle pawn promotion
+                                //Check and handle pawn promotion
                                 if (currentPiece.contains("pawn")) {
                                     boolean isWhite = currentPiece.contains("white");
                                     if ((isWhite && row == 0) || (!isWhite && row == 7)) {
@@ -231,49 +264,56 @@ public class ChessGame extends Application {
                                     }
                                 }
 
-                                // Update piece's moved status
+                                //Update piece's moved status
                                 piece.setMoved(true);
 
+                                //Increment move counter based on turn and piece type
                                 if(!isWhiteTurn) {
                                     numberOfMoves++;
                                 }
 
                                 if(currentPiece.contains("pawn") || !toBeRemoved.equals("null")) {
+                                    //Reset half-move clock for pawn move or capture
                                     halfMoveClock = 0;
                                 } else {
+                                    //Increment half-move clock for other moves
                                     halfMoveClock++;
                                 }
                                 piece.setMoved(true);
+                                //Calculate threatened squares
                                 calculateThreatenedSquares();
+                                //Switch turns
                                 switchTurn();
 
                             }else {
-                                //if move invalid, return to last position
+                                //If move invalid, return to last position
                                 gridPane.getChildren().remove(selectedPiece);
                                 gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                             }
                         } else {
-                            //if move outside the board, return to last position
+                            //If move outside the board, return to last position
                             gridPane.getChildren().remove(selectedPiece);
                             gridPane.add(selectedPiece, initialPieceCoordinateCOL, initialPieceCoordinateROW);
                         }
 
-                        //reset initial coordinate
+                        //Reset initial coordinate
                         initialPieceCoordinateROW = -1;
                         initialPieceCoordinateCOL = -1;
 
-                        //printBoardState();
+                        //Calculate the threatened squares
                         calculateThreatenedSquares();
-                        selectedPiece = null; // Reset selected piece
+                        selectedPiece = null; //Reset selected piece
 
                     }
 
 
                 }
             }
+            //Print the current board in FEN format
             System.out.println(boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves));
         });
 
+        //Set up the primary stage
         primaryStage.setResizable(false);
         primaryStage.setScene(scene);
         primaryStage.setTitle("Chess Game");
@@ -680,38 +720,58 @@ public class ChessGame extends Application {
 
 
 
-
+    //Handles the promotion of a pawn when it reaches the final row
     private void handlePawnPromotion(String currentPiece, int col, int row, boolean isWhite) {
+        //List of promotion options available to the player
         List<String> promotionOptions = Arrays.asList("Queen", "Rook", "Bishop", "Knight");
+        //Create a dialog box to allow the player to choose the piece for promotion
         ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", promotionOptions);
+        //Title of the dialog box
         dialog.setTitle("Pawn promotion");
+        //No header text
         dialog.setHeaderText(null);
+        //Pawn promotion selection text
         dialog.setContentText("Choose piece you want to promote:");
 
+        //Show the dialog and wait for the player to make a selection
         Optional<String> result = dialog.showAndWait();
+        //If the player makes a selection for promotion, proceed.
         result.ifPresent(choice -> {
-            // remove the current pawn image
+            //Remove the current pawn image
             ImageView pawnView = imageViewMap.get(currentPiece);
+            //Remove the pawn's image from the gird
             gridPane.getChildren().remove(pawnView);
+            //Remove the pawn from the map
             imageViewMap.remove(currentPiece);
 
+            //Increment the global counter for unique piece identification
             globalCountForPromotion = globalCountForPromotion + 1;
-            //create new piece
+            //Create new piece
+            //Convert choice to lowercase("Queen" -> "queen")
             String newPieceType = choice.toLowerCase();
+            //New name
             String newPieceName = newPieceType + globalCountForPromotion+ (isWhite ? "white" : "black");
+            //Determine the color f the new piece
             String newColor = (isWhite ? "white" : "black");
+            //Create the promotion piece
             Piece promotedPiece = createPiece(newPieceType, isWhite ? "white" : "black");
+            //Get the image for the new promotion piece
             ImageView promotedPieceView = promotedPiece.getPiece();
 
 
+            //Add the new promotion piece to the piece map
             pieces.put(promotedPiece.getType() +globalCountForPromotion+ newColor, promotedPiece);
 
 
-            //add new piece
+            //Add the piece image to the board
             gridPane.add(promotedPieceView, col, row);
+            //Update the board state with the new promotion piece
             boardCurrent.set(col, row, newPieceName);
+            //Set the new piece's column
             promotedPiece.setCol(col);
+            //Set the new piece's row
             promotedPiece.setRow(row);
+            //Update the image view map with the new promotion piece
             imageViewMap.put(newPieceName, promotedPieceView);
         });
     }
@@ -792,9 +852,14 @@ public class ChessGame extends Application {
         };
     }
 
+    //Handles the castling move(special rules) for a King and its associated Rook
     private void handleCastling(int startCol, int startRow, int endCol, int endRow) {
+        //Determine if the castling is king-side or queen-side based on the king's final position
         boolean isKingSide = endCol > startCol;
+        //Determine if the starting and ending columns for the rook involved in castling
+        //Rook starts at column 7 for king-side, column 0 for queen-side
         int rookStartCol = isKingSide ? 7 : 0;
+        //Rook ends next to the king
         int rookEndCol = isKingSide ? endCol - 1 : endCol + 1;
 
         // Move rook
@@ -805,13 +870,22 @@ public class ChessGame extends Application {
         rook.handleCastlingMove(rookEndCol);
     }
 
+    //Moves a rook from its starting position to its new position during a castling(special rules)
     private String moveRook(int startRow, int rookStartCol, int rookEndCol) {
+        //Get the name of the rook piece at its starting position
         String rookPiece = boardCurrent.get(rookStartCol, startRow);
+        //Find the imageView for the rook from the image view map
         ImageView rookView = imageViewMap.get(rookPiece);
+        //Remove the rook's image from its current position on the gird
         gridPane.getChildren().remove(rookView);
+        //Add the rook's image from its current position on the grid
         gridPane.add(rookView, rookEndCol, startRow);
+        //Update the board state to reflect the rook's new position
+        //Clear the rook's old position
         boardCurrent.set(rookStartCol, startRow,"null");
+        //Set the rook's new position
         boardCurrent.set(rookEndCol, startRow, rookPiece);
+        //Return the name of the rook piece
         return rookPiece;
     }
 
@@ -975,26 +1049,34 @@ public class ChessGame extends Application {
     //Screens to select game mode and difficulty
     private void showGameModeSelectionPopup(Stage primaryStage) {
         try {
+            //Initialize the Stockfish chess engine
             initializeStockfish();
         } catch (IOException e) {
             System.err.println("Failed to initialize Stockfish: " + e.getMessage());
             // Optionally, show an error dialog to the user
         }
+        //Crate the new popup stage for the game mode selection
         Stage popupStage = new Stage();
         popupStage.initModality(Modality.APPLICATION_MODAL);
         popupStage.initOwner(primaryStage);
         popupStage.setTitle("Game Setup");
 
+        //Create VBox layout
         VBox vbox = new VBox(20);
+        //Center align
         vbox.setAlignment(Pos.CENTER);
+        //Add padding around the VBox
         vbox.setPadding(new Insets(30));
 
         //Game mode selection
+        //Group to ensure only one mode is selected
         ToggleGroup modeGroup = new ToggleGroup();
         ToggleButton oneVsOneButton = createModeButton("1 vs 1", modeGroup);
         ToggleButton stockfishButton = createModeButton("Play against Stockfish", modeGroup);
         ToggleButton simpleAIButton = createModeButton("Play against Simple AI", modeGroup);
+        //Arrange game mode selection
         VBox modeBox = new VBox(20, oneVsOneButton, stockfishButton, simpleAIButton);
+        //Center align
         modeBox.setAlignment(Pos.CENTER);
 
         //Difficulty selection (initially hidden)
@@ -1002,59 +1084,80 @@ public class ChessGame extends Application {
         ToggleButton easyButton = createDifficultyButton("Easy", 1, difficultyGroup);
         ToggleButton mediumButton = createDifficultyButton("Medium", 7, difficultyGroup);
         ToggleButton hardButton = createDifficultyButton("Hard", 10, difficultyGroup);
+        //Arrange difficulty selection
         VBox difficultyBox = new VBox(20, easyButton, mediumButton, hardButton);
         difficultyBox.setAlignment(Pos.CENTER);
         difficultyBox.setVisible(false);
 
+        //Add game mode and difficulty selection to the VBox
         vbox.getChildren().addAll(modeBox, difficultyBox);
 
+        //Create a scene for the popup and set it to the popup stage
         Scene popupScene = new Scene(vbox, 300, 400);
         popupStage.setScene(popupScene);
 
         //Set up button actions
         oneVsOneButton.setOnAction(e -> {
+            //Set game mode to "1vs1"
             playAgainstStockfish = false;
+            //Close the popup
             popupStage.close();
         });
 
         stockfishButton.setOnAction(e -> {
+            //Set game mode to "Play against Stockfish
             playAgainstStockfish = true;
             playAgainstSimpleAI = false;
             modeBox.setVisible(false);
+            //Show difficulty selection
             difficultyBox.setVisible(true);
             popupStage.setTitle("Select Difficulty");
         });
 
         simpleAIButton.setOnAction(e -> {
+            //Set game mode to "Play against Simple AI"
             playAgainstSimpleAI = true;
             playAgainstStockfish = false;
             simpleAI = new customAi(false); // AI plays as black
             popupStage.close();
         });
 
+        //Set action for difficulty selection
         difficultyGroup.selectedToggleProperty().addListener((observable, oldValue, newValue) -> {
             if (newValue != null) {
+                //Set Stockfish depth based on selected difficulty
                 stockfishDepth = (int) newValue.getUserData();
+                //Close the popup
                 popupStage.close();
             }
         });
 
+        //Show the popup and wait for user
         popupStage.showAndWait();
     }
 
+    //Toggle button for game mode selection
     private ToggleButton createModeButton(String text, ToggleGroup group) {
         ToggleButton button = new ToggleButton(text);
+        //Assign the button to the group
         button.setToggleGroup(group);
+        //Set the size of the button
         button.setPrefSize(200, 50);
+        //Font
         button.setStyle("-fx-font-size: 16px;");
         return button;
     }
 
+    //Toggle button for difficulty selection
     private ToggleButton createDifficultyButton(String text, int depth, ToggleGroup group) {
         ToggleButton button = new ToggleButton(text);
+        //Assign the button to the group
         button.setToggleGroup(group);
+        //Set the user data for the difficulty depth
         button.setUserData(depth);
+        //Set the size of the button
         button.setPrefSize(200, 50);
+        //Font
         button.setStyle("-fx-font-size: 16px;");
         return button;
     }
