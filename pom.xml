@@ -7,23 +7,26 @@
     <groupId>me</groupId>
     <artifactId>chessCapstone</artifactId>
     <version>1.0-SNAPSHOT</version>
-    <name>demo1</name>
+    <name>chessCapstoneGame</name>
+    <packaging>jar</packaging>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.2</junit.version>
+        <java.version>23</java.version>
+        <javafx.version>23</javafx.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-controls</artifactId>
-            <version>18.0.2</version>
+            <version>23</version>
         </dependency>
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-fxml</artifactId>
-            <version>18.0.2</version>
+            <version>23</version>
         </dependency>
 
         <dependency>
@@ -41,36 +44,47 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-media</artifactId>
-            <version>18.0.2</version> <!-- Use the appropriate version -->
-
+            <version>23</version>
         </dependency>
     </dependencies>
 
+
+
     <build>
         <plugins>
+
+
+
+
+
+
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.13.0</version>
                 <configuration>
-                    <source>18</source>
-                    <target>18</target>
+                    <source>23</source>
+                    <target>23</target>
                     <compilerArgs>
                         <arg>--add-modules</arg>
                         <arg>javafx.media</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>
+
+
+
             <plugin>
                 <groupId>org.openjfx</groupId>
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <executions>
                     <execution>
-                        <!-- Default configuration for running with: mvn clean javafx:run -->
+
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>me.demo1/me.chessCapstone.HelloApplication</mainClass>
+                            <mainClass>me.chessCapstone.Launcher</mainClass>
+
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
@@ -81,6 +95,77 @@
                     </execution>
                 </executions>
             </plugin>
+
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                        <configuration>
+                            <shadedArtifactAttached>true</shadedArtifactAttached>
+                            <transformers>
+                                <transformer implementation=
+                                                     "org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                                    <mainClass>me.chessCapstone.Launcher</mainClass>
+                                </transformer>
+                            </transformers>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>${java.home}/bin/jpackage</executable>
+                            <arguments>
+                                <argument>--name</argument>
+                                <argument>chessCapstone</argument>
+                                <argument>--input</argument>
+                                <argument>${project.build.directory}</argument>
+                                <argument>--main-jar</argument>
+                                <argument>${project.build.finalName}-shaded.jar</argument>
+                                <argument>--main-class</argument>
+                                <argument>me.chessCapstone.Launcher</argument>
+                                <argument>--type</argument>
+                                <argument>dmg</argument> <!-- For Windows, use exe; For macOS use dmg -->
+                                <argument>--icon</argument>
+                                <!-- For Windows -->
+<!--                                <argument>src/main/resources/icons/windows-Chess.ico</argument>-->
+                                <!--  For macOS -->
+                                <argument>src/main/resources/icons/mac-Chess.icns</argument>
+
+
+                            </arguments>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
+
+
+
+
+
+
+
+
+
 </project>
