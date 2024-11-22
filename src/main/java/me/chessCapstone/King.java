@@ -59,15 +59,17 @@ public class King extends Piece {
         return false;
     }
 
-    //TODO THIS METHOD
     @Override
+    //This method checks if the target square is a valid move.
+    //An override was needed in order to account for castling.
     public boolean isValidMove(int endCol, int endRow, String[][] board, ArrayList<Tile> threatenedSquares) {
-        // Check for regular king move
+
         if (Math.abs(endCol - getCol()) <= 1 && Math.abs(endRow - getRow()) <= 1) {
+            //The target square can be reached through a regular King move.
             return super.isValidMove(endCol, endRow, board, threatenedSquares);
         }
 
-        // Check for castling
+        //Check for castling
         return !hasMoved() && getRow() == endRow && Math.abs(endCol - getCol()) == 2 && isCastlingValid(endCol, board, threatenedSquares);
     }
 
