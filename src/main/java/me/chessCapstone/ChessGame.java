@@ -9,6 +9,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
@@ -334,41 +336,46 @@ public class ChessGame extends Application {
 
         try {
             System.out.println("Attempting to initialize chess engine...");
-
+            //Initialize the Stockfish engine based on OS type
             initializeStockfish();
-
             System.out.println("Chess engine initialized successfully.");
 
-
         } catch (IOException e) {
+            //Handle file system related errors (Stockfish binary not found)
             System.err.println("Failed to initialize chess engine: " + e.getMessage());
             e.printStackTrace();
         } catch (Exception e) {
+            //Handle other unexpected errors during initialization
             System.err.println("Unexpected error initializing chess engine: " + e.getMessage());
             e.printStackTrace();
         }
 
+        //Handle shutdown properly
         primaryStage.setOnCloseRequest(event -> {
+            //prevent further event handling
             event.consume();
             shutdown();
         });
 
 
+        //Set up secret mode handler (Shift + 7)
         scene.setOnKeyPressed(event -> {
             if (SECRET_COMBO.match(event)) {
+                //toggle secret mode
                 secretMode = !secretMode;
                 String message = secretMode ? "Secret Mode Activated: Stockfish vs Stockfish"
                         : "Secret Mode Deactivated";
-
-
 
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Secret Mode");
                 alert.setHeaderText(null);
                 alert.setContentText(message);
                 alert.showAndWait();
-                if (secretMode && isWhiteTurn) {
 
+                //When mode is activated stockfish needs to make move
+                //immediately to avoid current switch turn logic
+                //from forcing one last manual white move
+                if (secretMode && isWhiteTurn) {
                     makeEngineMove();
                     switchTurn();
                 }
@@ -380,39 +387,44 @@ public class ChessGame extends Application {
 
     private void shutdown() {
 
+        //Terminate program upon exiting window
         System.out.println("Exiting application...");
+
         Platform.exit();
+        //Clean up JavaFX resources
         System.exit(0);
+        //Terminate JVM
     }
 
     private void switchTurn() {
-
-
-
+        //Toggle between white and black's turn
         isWhiteTurn = !isWhiteTurn;
-        //boardCurrent.printBoardState();
+
         playMoveSound();
 
-
+        //Update board state
         calculateThreatenedSquares();
+        //Recalculate squares under attack
         updateCheckStatus();
 
         if(checkForDraw()){
-            return;
+            return;  //Game ends
         };
 
         if (isCheckmate()) {
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
-            return;
+            return;  //Game ends
         }
 
-
-
+        //Handle computer moves if playing against AI
         if (playAgainstStockfish) {
+            //Make Stockfish move if it's black's turn or if in secret mode (Stockfish vs Stockfish)
             if (!isWhiteTurn || secretMode) {
                 if (engine != null) {
+                    //Add delay before AI move for better user experience
                     makeDelayedMove(() -> {
                         makeEngineMove();
+                        // Make Stockfish's move
                         switchTurn();
                     });
                 } else {
@@ -420,41 +432,52 @@ public class ChessGame extends Application {
                 }
             }
         } else if (!isWhiteTurn && playAgainstSimpleAI) {
+            //Make simple AI move if it's black's turn
             makeDelayedMove(() -> {
                 makeSimpleAIMove();
                 switchTurn();
             });
         } else {
-
-
+            //If neither AI condition is met, wait for human player input
+            //The game continues through mouse event handlers
         }
     }
 
     private void makeDelayedMove(Runnable action) {
+        //Prevents threading issues with UI updates
         Platform.runLater(() -> {
+            //Pause for 1.2 seconds
             PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
+            //event fires after the pause
             pause.setOnFinished(event -> action.run());
+            //start the pause transition
             pause.play();
         });
     }
 
 
+
+
+
+    //Handles making a move using the Stockfish chess engine
+    //Converts current board state to FEN, gets best move from engine, and applies it
     private void makeEngineMove() {
 
-
+        //Check if engine is properly initialized
         if (engine == null) {
             System.err.println("Chess engine is not initialized!");
             return;
         }
 
         try {
-            //current board state to FEN notation
+            //current board state to FEN notation (Forsyth–Edwards Notation)
             String fen = boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves);
-            //commands to Stockfish engine
+            //send current board position to Stockfish engine
             engine.sendCommand("position fen " + fen);
 
-            //different depth for secret mode
+            //different depth set by difficulty chosen by user
             int depth = stockfishDepth;
+            //different depth for secret mode
             if (secretMode) {
                 depth = isWhiteTurn ? stockfishDepth + 5 : stockfishDepth ; // Make black slightly weaker
             }
@@ -473,7 +496,9 @@ public class ChessGame extends Application {
     private String getBestMoveFromEngine() {
         try {
             String line;
+            //Keep reading lines from engine output until we find the best move
             while ((line = engine.readLine()) != null) {
+                //find line that starts with "bestmove"
                 if (line.startsWith("bestmove")) {
                     //Split the line by whitespace and return the second word
                     //"bestmove g1f3 ponder xxxx"
@@ -488,10 +513,10 @@ public class ChessGame extends Application {
         return null;
     }
 
+    //Applies a move calculated by the Stockfish engine to the chess board
+    //Handles piece movement, captures, promotions, and special moves
     private void applyEngineMove(String move) {
         try {
-            System.out.println("Applying engine move: " + move);
-
             int startCol = move.charAt(0) - 'a';
             int startRow = '8' - move.charAt(1);
             int endCol = move.charAt(2) - 'a';
@@ -500,78 +525,110 @@ public class ChessGame extends Application {
             String movingPiece = boardCurrent.get(startCol, startRow);
             String capturedPiece = boardCurrent.get(endCol, endRow);
 
-            //Handle captures
+
+            //Synchronization aid that allows threads to wait until a set of operations completes (CountDownLatch)
+            //Constructor takes initial count
+            // countDown() decrements the count
+            // await() blocks until count reaches zero
+            // To ensure move completion before proceeding
+            CountDownLatch moveLatch = new CountDownLatch(1);
+
+
+
+            // Handle captures first
             if (!capturedPiece.equals("null")) {
+                //Ensures code runs on JavaFX Application Thread (runLater) think a queue
+                //Required for all UI updates in JavaFX (JavaFX has a single UI thread)
+                //Prevents threading issues when modifying UI elements
                 Platform.runLater(() -> {
-                    ImageView capturedPieceView = imageViewMap.get(capturedPiece);
-                    gridPane.getChildren().remove(capturedPieceView);
-                    imageViewMap.remove(capturedPiece);
+                    //Ensures thread-safe access to the GridPane (synchronized)
+                    //Only one thread can execute synchronized block at a time (think locks and keys)
+                    //Prevents concurrency issues
+                    synchronized (gridPane) {
+                        ImageView capturedPieceView = imageViewMap.get(capturedPiece);
+                        if (capturedPieceView != null) {
+                            gridPane.getChildren().remove(capturedPieceView);
+                            imageViewMap.remove(capturedPiece);
+                        }
+                        boardCurrent.set(endCol, endRow, "null");
+                    }
                 });
             }
-
-
-
 
             //Check for pawn promotion
             boolean isPromotion = move.length() == 5 &&
                     movingPiece.contains("pawn") &&
-                    (endRow == 0 || endRow == 7) &&
-                    "qrbn".indexOf(move.charAt(4)) != -1;
+                    (endRow == 0 || endRow == 7);
 
             if (isPromotion) {
                 char promotionPiece = move.charAt(4);
-                handleEnginePawnPromotion(movingPiece, endCol, endRow, promotionPiece);
-
-                boardCurrent.set(startCol, startRow,"null");
-
-            } else {
-
-                handleSpecialMoves(movingPiece, startCol, startRow, endCol, endRow, move.length() == 5 ? move.charAt(4) : ' ');
-                final ImageView movingPieceView = imageViewMap.get(movingPiece);
-
-                //Piece movement
                 Platform.runLater(() -> {
-                    //Create and configure the transition
-                    TranslateTransition transition = new TranslateTransition(Duration.millis(500), movingPieceView);
-                    transition.setFromX(0);
-                    transition.setFromY(0);
-                    transition.setToX((endCol - startCol) * TILE_SIZE);
-                    transition.setToY((endRow - startRow) * TILE_SIZE);
-
-                    //Play the transition
-                    transition.play();
-
-                    //After the transition completes, update the piece's position
-                    transition.setOnFinished(e -> {
-                        gridPane.getChildren().remove(movingPieceView);
-                        gridPane.add(movingPieceView, endCol, endRow);
-                        movingPieceView.setTranslateX(0);
-                        movingPieceView.setTranslateY(0);
-                    });
+                    synchronized (gridPane) {
+                        handleEnginePawnPromotion(movingPiece, endCol, endRow, promotionPiece);
+                        boardCurrent.set(startCol, startRow, "null");
+                        moveLatch.countDown();
+                    }
                 });
+            } else {
+                //Handle regular moves and other special moves
+                Platform.runLater(() -> {
+                    synchronized (gridPane) {
+                        try {
+                            //Handle castling and en passant first
+                            handleSpecialMoves(movingPiece, startCol, startRow, endCol, endRow,
+                                    move.length() == 5 ? move.charAt(4) : ' ');
+
+                            //Then handle the regular move
+                            ImageView movingPieceView = imageViewMap.get(movingPiece);
+
+                            //Create and play transition animation
+                            // Set up animation that shows it moving from old square to new square
+                            TranslateTransition transition = new TranslateTransition(Duration.millis(500), movingPieceView);
+                            //Calculate starting position relative to final position
+                            //If moving from e2 to e4, this might be (0, -200) meaning "start 2 squares up"
+                            transition.setFromX((startCol - endCol) * TILE_SIZE);
+                            transition.setFromY((startRow - endRow) * TILE_SIZE);
+                            //Set ending position to (0,0) in the new grid cell
+                            transition.setToX(0);
+                            transition.setToY(0);
+
+                            //Move the piece in the GridPane first
+                            gridPane.getChildren().remove(movingPieceView);
+                            gridPane.add(movingPieceView, endCol, endRow);
+
+                            //Reset translation after animation completes
+                            transition.setOnFinished(e -> {
+                                movingPieceView.setTranslateX(0);
+                                movingPieceView.setTranslateY(0);
+                            });
+                            //Start moving the piece
+                            transition.play();
 
 
+                            //Update board state
+                            boardCurrent.set(endCol, endRow, movingPiece);
+                            boardCurrent.set(startCol, startRow, "null");
 
-
-
-                // Update boardCurrent
-                boardCurrent.set(endCol, endRow, movingPiece);
-                boardCurrent.set(startCol, startRow,"null");
-                // Update piece's moved status
-                Piece piece = pieces.get(movingPiece);
-                if (piece != null) {
-                    piece.setMoved(true);
-                    piece.setCol(endCol);
-                    piece.setRow(endRow);
-                }
+                            //Update piece data
+                            Piece piece = pieces.get(movingPiece);
+                            if (piece != null) {
+                                piece.setCol(endCol);
+                                piece.setRow(endRow);
+                                piece.setMoved(true);
+                            }
+                        } catch (Exception e) {
+                            System.err.println("Error during move: " + e.getMessage());
+                        } finally {
+                            moveLatch.countDown();
+                        }
+                    }
+                });
             }
 
-
-
-
-
-            //Update game state
-            calculateThreatenedSquares();
+            //Wait for move completion for a half a second
+            if (!moveLatch.await(500, TimeUnit.MILLISECONDS)) {
+                System.err.println("Move timed out!");
+            }
 
         } catch (Exception e) {
             System.err.println("Error applying engine move: " + move);
