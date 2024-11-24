@@ -616,6 +616,9 @@ public class ChessGame extends Application {
                                 piece.setRow(endRow);
                                 piece.setMoved(true);
                             }
+
+                            calculateThreatenedSquares();
+                            updateCheckStatus();
                         } catch (Exception e) {
                             System.err.println("Error during move: " + e.getMessage());
                         } finally {
@@ -625,10 +628,6 @@ public class ChessGame extends Application {
                 });
             }
 
-            //Wait for move completion for a half a second
-            if (!moveLatch.await(500, TimeUnit.MILLISECONDS)) {
-                System.err.println("Move timed out!");
-            }
 
         } catch (Exception e) {
             System.err.println("Error applying engine move: " + move);
@@ -636,20 +635,23 @@ public class ChessGame extends Application {
         }
     }
 
+
     private void updateCheckStatus() {
+        //Update which squares are under attack by each side
         calculateThreatenedSquares();
+
+        //Check if either king is under attack
         boolean whiteInCheck = whiteKing.isInCheck(squaresThreatenedByBlack);
         boolean blackInCheck = blackKing.isInCheck(squaresThreatenedByWhite);
 
         // System.out.println("White in check: " + whiteInCheck);
         // System.out.println("Black in check: " + blackInCheck);
 
-        //Update white king's tile
+        //Update the king's tile (red if in check)
         updateKingTileColor(whiteKing, whiteInCheck, lastWhiteKingPos);
-
-        //Update black king's tile
         updateKingTileColor(blackKing, blackInCheck, lastBlackKingPos);
     }
+
 
 
     //when a king is in check, the tile it was on last is red
