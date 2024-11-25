@@ -10,7 +10,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 
 import javafx.animation.PauseTransition;
 import javafx.animation.TranslateTransition;
@@ -619,6 +618,8 @@ public class ChessGame extends Application {
 
                             calculateThreatenedSquares();
                             updateCheckStatus();
+                            isCheckmate();
+                            checkForDraw();
                         } catch (Exception e) {
                             System.err.println("Error during move: " + e.getMessage());
                         } finally {
@@ -654,16 +655,18 @@ public class ChessGame extends Application {
 
 
 
-    //when a king is in check, the tile it was on last is red
+    //when a king is in check its tile is turned red
     private void updateKingTileColor(King king, boolean isInCheck, int[] lastPos) {
+        //Get current king position
         int col = king.getCol();
         int row = king.getRow();
 
-        //Restore the color of the last position if it's different from the current position
+        //If king has moved, restore the original color of its previous tile
         if (lastPos[0] != row || lastPos[1] != col) {
             restoreOriginalColor(lastPos[0], lastPos[1]);
         }
 
+        //Get tile where king currently is
         StackPane kingTile = boardCurrent.getStiles()[row][col];
 
         if (isInCheck) {
@@ -672,14 +675,18 @@ public class ChessGame extends Application {
             restoreOriginalColor(row, col);
         }
 
-        //Update the last position
+        //Store current position as the last known position
         lastPos[0] = row;
         lastPos[1] = col;
     }
+
+
     //when a king is not in check, the tile it was on last is white or gray
     private void restoreOriginalColor(int row, int col) {
         StackPane tile = boardCurrent.getStiles()[row][col];
+        //Calculate if this should be a light or dark square
         boolean isLightSquare = (row + col) % 2 == 0;
+        //set the color of the tile to correct color
         tile.setStyle(isLightSquare ? "-fx-background-color: WHITE;" : "-fx-background-color: GRAY;");
     }
 
@@ -691,36 +698,37 @@ public class ChessGame extends Application {
 
     //stockfish__________helpermethods____________________________________stockfish
 
-
-
-
+    //Handles special moves for the chess engine (Stockfish)
     private void handleSpecialMoves(String movingPiece, int startCol, int startRow, int endCol, int endRow, char promotionPiece) {
+        //Strip numbers and color from piece name to get base piece type (e.g., "pawn1white" -> "pawn")
         String pieceType = movingPiece.replaceAll("\\d", "").replace("white", "").replace("black", "");
+
 
         if (pieceType.equals("pawn") && (endRow == 0 || endRow == 7)) {
             handleEnginePawnPromotion(movingPiece, endCol, endRow, promotionPiece);
-        } else
-        if (pieceType.equals("king") && Math.abs(endCol - startCol) == 2) {
+        } else if (pieceType.equals("king") && Math.abs(endCol - startCol) == 2) {
             handleCastlingStockfish(startCol, startRow, endCol, endRow);
         } else if (pieceType.equals("pawn") && startCol != endCol && boardCurrent.get(endCol, endRow).equals("null")) {
             handleEnPassant(startCol, startRow, endCol, endRow);
         }
 
-        //Update last move for en passant
+        //Update last move for future en passants
         lastMoveWasDoublePawnMove = pieceType.equals("pawn") && Math.abs(endRow - startRow) == 2;
         if (lastMoveWasDoublePawnMove) {
             lastPawnMoved = movingPiece;
         }
     }
 
+    //Handles pawn promotion for the chess engine (Stockfish)
     private void handleEnginePawnPromotion(String currentPiece, int col, int row, char promotionPiece) {
+        //Ensure UI updates happen on JavaFX Application Thread
         Platform.runLater(() -> {
-            // Remove the current pawn image
+            //Remove the existing pawn from the board and data structures
             ImageView pawnView = imageViewMap.get(currentPiece);
             gridPane.getChildren().remove(pawnView);
             imageViewMap.remove(currentPiece);
 
-            // Determine the new piece type
+            //Determine the new piece type
             String newPieceType = switch (promotionPiece) {
                 case 'q' -> "queen";
                 case 'r' -> "rook";
@@ -729,17 +737,21 @@ public class ChessGame extends Application {
                 default -> "queen"; // Default to queen if something unexpected happens
             };
 
+            //Increment global counter to ensure unique piece IDs
             globalCountForPromotion++;
+
             //Create new piece
             String newPieceName = newPieceType + globalCountForPromotion + "black";
             Piece promotedPiece = createPiece(newPieceType, "black");
             ImageView promotedPieceView = promotedPiece.getPiece();
 
+            //Add new piece to pieces map
             pieces.put(newPieceName, promotedPiece);
 
             //Add new piece
             gridPane.add(promotedPieceView, col, row);
 
+            //Update board state and piece properties
             boardCurrent.set(col, row, newPieceName);
             promotedPiece.setCol(col);
             promotedPiece.setRow(row);
@@ -751,27 +763,39 @@ public class ChessGame extends Application {
         });
     }
 
+
+
+    //Handles castling moves for the Stockfish engine
     private void handleCastlingStockfish(int startCol, int startRow, int endCol, int endRow) {
+        //Determine if this is kingside (right) or queenside (left) castling
         int rookStartCol = endCol > startCol ? 7 : 0;
+
+        //Calculate where the rook should end up
         int rookEndCol = endCol > startCol ? endCol - 1 : endCol + 1;
 
+
+        //Move rook to its new position
         String rookPiece = moveRook(startRow, rookStartCol, rookEndCol);
 
+        // Mark rook as moved to prevent future castling with this rook
         Piece rook = pieces.get(rookPiece);
         if (rook != null) {
             rook.setMoved(true);
         }
     }
 
+    // Handles en passant captures for the Stockfish engine
     private void handleEnPassant(int startCol, int startRow, int endCol, int endRow) {
+        // Get the pawn being captured
         String capturedPawn = boardCurrent.get(endCol, startRow);
         ImageView capturedPawnView = imageViewMap.get(capturedPawn);
 
+        //Remove the captured pawn from the visual board and image mapping
         gridPane.getChildren().remove(capturedPawnView);
         imageViewMap.remove(capturedPawn);
+        //Update the board state to show empty square
         boardCurrent.set(endCol, startRow, "null");
     }
-
 
 
 //END OF stockfish_______________________________________________________stockfish helper methods
@@ -948,6 +972,7 @@ public class ChessGame extends Application {
         return rookPiece;
     }
 
+    //Sets up references to both kings and calculates initial threatened squares
     private void initializeGame() {
 
         whiteKing = (King) pieces.get("king1white");
@@ -955,7 +980,11 @@ public class ChessGame extends Application {
         calculateThreatenedSquares();
     }
 
+    //Simulates a move to check if it would leave the king in check
+    //Also validates if the move is legal
     public boolean simulateMoveProtectKing(Piece piece, int endCol, int endRow) {
+
+        //Store piece's current position
         int startCol = piece.getCol();
         int startRow = piece.getRow();
 
@@ -969,6 +998,7 @@ public class ChessGame extends Application {
         piece.setCol(endCol);
         piece.setRow(endRow);
 
+        //Recalculate which squares are under attack after the move
         calculateThreatenedSquares();
 
         //Check for check
@@ -981,13 +1011,18 @@ public class ChessGame extends Application {
         piece.setCol(startCol);
         piece.setRow(startRow);
 
+        //Recalculate threatened squares for original position
         calculateThreatenedSquares();
 
+        //Return true if the move is legal, false otherwise
         return !kingInCheck && piece.isValidMove(endCol, endRow, boardCurrent.getBoard(),
                 isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite);
     }
 
+
+    //Checkmate occurs when the king is in check and there are no legal moves
     private boolean isCheckmate() {
+        //Get the king and threatened squares based on whose turn it is
         King currentKing = isWhiteTurn ? whiteKing : blackKing;
         ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
 
@@ -996,14 +1031,16 @@ public class ChessGame extends Application {
             return false;
         }
 
-        // Check if any piece (including the king) can make a legal move
-        if (!hasNoLegalMoves()) {  // This was the issue - we were returning false when there were no legal moves
-            return false;  // If there ARE legal moves, it's not checkmate
+        //If there are any legal moves, it's not checkmate
+        if (!hasNoLegalMoves()) {
+            return false;
         }
 
-        // It's checkmate, show popup
+        //It's checkmate, show popup
         Platform.runLater(() -> {
+            //Determine winner based on whose turn it was
             String winningColor = isWhiteTurn ? "Black" : "White";
+            //popup for checkmate
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Checkmate");
             alert.setHeaderText(null);
@@ -1020,27 +1057,31 @@ public class ChessGame extends Application {
 
 
 
+    //Handles special pawn moves including double moves and en passant captures
     private void handlePawnMove(String pieceType, int row, int initialPieceCoordinateROW, int col) {
-        // Check for double pawn move (en passant)
+        // Check for double pawn move
         if (Math.abs(row - initialPieceCoordinateROW) == 2) {
             lastMoveWasDoublePawnMove = true;
+            //Store the pawn that made the double move
             lastPawnMoved = boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW);
+            //Set the en passant target square
             enPassantTile.setCol(lastPawnMoved.charAt(4) - '0');
             enPassantTile.setRow(lastPawnMoved.contains("white") ? 3 : 5);
         } else {
+            //If not a double move, reset en passant flags
             lastMoveWasDoublePawnMove = false;
             enPassantTile.setCol(-1);
             enPassantTile.setRow(-1);
         }
 
-        // Check for en passant capture
+        //Check for en passant capture
         if (EnPassantPossible) {
             int capturedPawnRow = pieceType.contains("white") ? row + 1 : row - 1;
 
-            // Remove the captured pawn from the board
+            //Remove the captured pawn from the board
             boardCurrent.set(col, capturedPawnRow, "null");
 
-            // Remove the captured pawn's image from the GUI
+            //Remove the captured pawn's image from GUI
             ImageView capturedPawnView = imageViewMap.get(lastPawnMoved);
             if (capturedPawnView != null) {
                 gridPane.getChildren().remove(capturedPawnView);
@@ -1049,14 +1090,20 @@ public class ChessGame extends Application {
         }
     }
 
-    //Initialize Stockfish engine
+    //Initializes the path to the Stockfish chess engine executable
+//Attempts to load from resources first, then falls back to project directory
     private Path initializeStockfishPath(String stockfishRelativePath) throws IOException {
         //First, try to load from resources
         InputStream inputStream = getClass().getResourceAsStream("/" + stockfishRelativePath);
         if (inputStream != null) {
+            // \Create temporary directory for Stockfish
             Path tempDir = Files.createTempDirectory("stockfish");
             Path tempFile = tempDir.resolve("stockfish");
+
+
+            //Copy the Stockfish binary to the temporary directory
             Files.copy(inputStream, tempFile, StandardCopyOption.REPLACE_EXISTING);
+            //Make the file executable
             tempFile.toFile().setExecutable(true);
 
             return tempFile;
@@ -1064,9 +1111,11 @@ public class ChessGame extends Application {
 
         //If not found in resources, try to find it in the project directory
         String projectDir = System.getProperty("user.dir");
+        //Construct path to resources directory
         Path resourcesPath = Paths.get(projectDir, "src", "main", "resources");
         Path stockfishPath = resourcesPath.resolve(stockfishRelativePath);
 
+        //Verify file exists and is executable
         File stockfishFile = stockfishPath.toFile();
         if (!stockfishFile.exists()) {
             throw new FileNotFoundException("Stockfish binary not found at: " + stockfishPath);
@@ -1079,8 +1128,12 @@ public class ChessGame extends Application {
     }
 
 
+    //Initializes the Stockfish chess engine based on the operating system
+    //Selects appropriate binary version and sets up the engine
     private void initializeStockfish() throws IOException {
+        //Determine which Stockfish binary to use based on OS
         String stockfishRelativePath;
+        //Check if running on Windows
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
             //For Windows
             //More compatible: Is a bit slower, but works on the vast majority of computers.
@@ -1094,15 +1147,18 @@ public class ChessGame extends Application {
             //stockfishRelativePath = "stockfish-windows-x86-64-sse41-popcnt.exe";
         } else {
             //For macOS or other systems
+            //Using M1/Apple Silicon optimized version
             stockfishRelativePath = "stockfish-macos-m1-apple-silicon";
         }
 
+        //Get the full path to the Stockfish binary
         Path stockfishPath = initializeStockfishPath(stockfishRelativePath);
 
         //System.out.println("Stockfish path: " + stockfishPath);
-
+        //Initialize the chess engine with the selected binary
         engine = new ChessEngine(stockfishPath.toString());
     }
+
 
 
     //Screens to select game mode and difficulty
@@ -1232,7 +1288,10 @@ public class ChessGame extends Application {
     // be valid. The rule applies to positions, not moves.
 
     //draw methods
+    //Creates a unique string key representing the current board position
+    //Used for detecting threefold repetition
     private String getPositionKey() {
+        //Initialize string builder for efficient string concatenation
         StringBuilder sb = new StringBuilder();
 
         //Append the entire board state
@@ -1243,12 +1302,22 @@ public class ChessGame extends Application {
         }
 
         //Append whose turn it is
+        //This is necessary because same position with different turn is different state
         sb.append(isWhiteTurn ? "w" : "b");
 
         return sb.toString();
     }
 
+
+
+
+    //Checks if the current position is a draw
+    //Draw conditions: threefold repetition, fifty-move rule, or stalemate
     private boolean checkForDraw() {
+        //Check all draw conditions:
+        // 1. Same position occurred three times
+        // 2. Fifty moves without pawn move or capture
+        // 3. Stalemate (no legal moves but not in check)
         boolean draw = checkForThreefoldRepetition() || halfMoveClock == 50 || isStalemate();
         if(draw) {
             handleDraw();
@@ -1256,45 +1325,73 @@ public class ChessGame extends Application {
         return draw;
     }
 
+
+    //Checks if the current position has occurred three times
+    //Uses position key to track unique board states
     private boolean checkForThreefoldRepetition() {
+        //Get unique string representation of current position
         String positionKey = getPositionKey();
+        //Get current count of this position and increment it
         int count = positionCounts.getOrDefault(positionKey, 0) + 1;
+        //Update position counter
         positionCounts.put(positionKey, count);
+        //Return true if position has occurred three times
         return count >= 3;
     }
 
-    //Stalemate ---------------------------
+
+    //Checks if the current position is a stalemate
+//Stalemate occurs when the player has no legal moves but their king is not in check
     private boolean isStalemate() {
+        //First check if there are any legal moves available
         if (hasNoLegalMoves()) {
+            //Get the current player's king and threatened squares
             King currentKing = isWhiteTurn ? whiteKing : blackKing;
             ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
+            //Stalemate occurs when king is NOT in check but has no legal moves
             return !currentKing.isInCheck(threatenedSquares);
         }
         return false;
     }
 
+    //Handles the draw scenario by displaying a popup and ending the game
     private void handleDraw() {
+        //Ensure UI updates happen on JavaFX Application Thread
         Platform.runLater(() -> {
+            //Create and configure alert dialog
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Draw");
             alert.setHeaderText(null);
             alert.setContentText("DRAW!");
+            //Show alert and wait for user acknowledgment
             alert.showAndWait();
+            //Handle end of game
             handleGameEnd("Better luck next time!");
         });
     }
 
+    //Checks if the current player has any legal moves available
+    //Iterates through all pieces and possible destinations to find valid moves
     private boolean hasNoLegalMoves() {
+        //Determine which color's pieces to check based on current turn
         String currentColor = isWhiteTurn ? "white" : "black";
 
+        //Iterate through all board positions
         for (int col = 0; col < BOARD_SIZE; col++) {
             for (int row = 0; row < BOARD_SIZE; row++) {
+                //Get piece at current position
                 String pieceKey = boardCurrent.get(col, row);
+
+                //Check if square has a piece of current player's color
                 if (!pieceKey.equals("null") && pieceKey.contains(currentColor)) {
                     Piece piece = pieces.get(pieceKey);
+
+                    //If piece exists, check all possible destination squares
                     if (piece != null) {
+                        //Try every possible destination square
                         for (int newCol = 0; newCol < BOARD_SIZE; newCol++) {
                             for (int newRow = 0; newRow < BOARD_SIZE; newRow++) {
+                                //If any legal move is found, return false (has legal moves)
                                 if (simulateMoveProtectKing(piece, newCol, newRow)) {
                                     return false;
                                 }
@@ -1304,6 +1401,7 @@ public class ChessGame extends Application {
                 }
             }
         }
+        //If no legal moves were found, return true
         return true;
     }
 
@@ -1313,12 +1411,14 @@ public class ChessGame extends Application {
 
 
 
+    //Restarts the chess game by creating a new instance
     private void restartApplication(Stage currentStage) {
+        //Ensure UI updates happen on JavaFX Application Thread
         Platform.runLater(() -> {
             try {
-
-
+                //Create a new instance of ChessGame
                 ChessGame newInstance = new ChessGame();
+                //Start new game using existing stage
                 newInstance.start(currentStage);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1328,24 +1428,34 @@ public class ChessGame extends Application {
 
 
 
-
+    //Handles the end of game scenario with a popup dialog
+    //Offers options to play again or exit the game
     private void handleGameEnd(String message) {
+        //Ensure UI updates happen on JavaFX Application Thread
         Platform.runLater(() -> {
+            //Create and configure the game over dialog
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Game Over");
             alert.setHeaderText(null);
             alert.setContentText(message + "\nDo you want to play again?");
 
+            //Create custom buttons for the dialog
             ButtonType playAgainButton = new ButtonType("Play Again");
             ButtonType exitButton = new ButtonType("Exit");
             alert.getButtonTypes().setAll(playAgainButton, exitButton);
 
+            //Show dialog and wait for user response
             Optional<ButtonType> result = alert.showAndWait();
+            //Handle user choice
             if (result.isPresent() && result.get() == playAgainButton) {
+                //Close current window
                 primaryStage.close();
+                //Create new stage for the next game
                 Stage next = new Stage();
+                //Restart the application with the new stage
                 restartApplication(next);
             } else {
+                //Exit application if user chose Exit or closed the di
                 Platform.exit();
                 System.exit(0);
             }
@@ -1353,15 +1463,24 @@ public class ChessGame extends Application {
     }
 
 
+    //Plays a sound effect when a chess piece is moved
+    //Uses JavaFX Media player to handle sound playback
+    //Sound file in resources directory
     private void playMoveSound() {
         try {
+            //Path to sound file in resources
             String soundFile = "/move_sound.wav";
+            //Create Media object from sound file
+            //requireNonNull ensures resource exists
             Media sound = new Media(Objects.requireNonNull(getClass().getResource(soundFile)).toExternalForm());
+            //Create and start media player
             MediaPlayer mediaPlayer = new MediaPlayer(sound);
             mediaPlayer.play();
 
 
         } catch (Exception e) {
+            //Log error if sound playback fails
+            //Game can continue without sound
             System.err.println("Error playing move sound: " + e.getMessage());
 
         }
@@ -1373,25 +1492,30 @@ public class ChessGame extends Application {
 
     // customAI ---------------------------------------
     // simple chess ai
+    //Makes a move for the simple AI by evaluating all possible moves
+    //and selecting the one with the highest score
     private void makeSimpleAIMove() {
-        List<Move> legalMoves = getAllLegalMoves(false);
+        //Get all possible legal moves for AI (black pieces)
+        List<Move> legalMoves = getAllLegalMovesCustomAI(false);
         Move bestMove = null;
+        //Initialize best score to minimum possible value
         int bestScore = Integer.MIN_VALUE;
         // int bestScore = Integer.MAX_VALUE;
         System.out.println("\n=== AI Move Evaluation ===");
 
+        //Evaluate each possible move
         for (Move move : legalMoves) {
-            // Save current board state
+            //Store current board state before making test move
             String capturedPiece = boardCurrent.get(move.endCol, move.endRow);
 
-            // Make move
+            //Make temporary move on board
             boardCurrent.set(move.endCol, move.endRow, move.piece);
             boardCurrent.set(move.startCol, move.startRow, "null");
 
-            // Evaluate position after move
+            //Calculate position score after move
             int score = simpleAI.evaluatePosition(boardCurrent, move);
 
-            // Print move details
+            //Print move details
             System.out.printf("Move: %s from (%d,%d) to (%d,%d) - Score: %d %s%n",
                     move.piece,
                     move.startCol, move.startRow,
@@ -1399,11 +1523,9 @@ public class ChessGame extends Application {
                     score,
                     score > bestScore ? " (New Best!)" : "");
 
-            if (!capturedPiece.equals("null")) {
-                System.out.println("  -> Captures: " + capturedPiece);
-            }
 
-            // Restore board state
+
+            //Restore board state
             boardCurrent.set(move.startCol, move.startRow, move.piece);
             boardCurrent.set(move.endCol, move.endRow, capturedPiece);
 
@@ -1422,22 +1544,30 @@ public class ChessGame extends Application {
                 bestMove.endCol, bestMove.endRow,
                 bestScore);
 
-        applyMove(bestMove);
+        //Apply the best move found
+        applyMoveCustomAI(bestMove);
     }
 
 
 
-    //   method to get all legal moves
-    private List<Move> getAllLegalMoves(boolean forWhite) {
+    //Gets all legal moves for either white or black pieces
+//Checks every possible move for each piece and validates it
+    private List<Move> getAllLegalMovesCustomAI(boolean forWhite) {
+        //Initialize list to store all legal moves
         List<Move> legalMoves = new ArrayList<>();
-
+        //Iterate through all squares on the board
         for (int startRow = 0; startRow < BOARD_SIZE; startRow++) {
             for (int startCol = 0; startCol < BOARD_SIZE; startCol++) {
+                //Get piece at current square
                 String piece = boardCurrent.get(startCol, startRow);
+                //Check if square has a piece of the current player's color
                 if (!piece.equals("null") && piece.contains(forWhite ? "white" : "black")) {
+                    //Check all possible destination squares
                     for (int endRow = 0; endRow < BOARD_SIZE; endRow++) {
                         for (int endCol = 0; endCol < BOARD_SIZE; endCol++) {
+                            //Check if move is legal
                             if (simulateMoveProtectKing(pieces.get(piece), endCol, endRow)) {
+                                //Add legal move to list
                                 legalMoves.add(new Move(startCol, startRow, endCol, endRow, piece));
                             }
                         }
@@ -1445,27 +1575,33 @@ public class ChessGame extends Application {
                 }
             }
         }
-
+        //Return list of all legal moves
         return legalMoves;
     }
 
-    // method to apply a move
-    private void applyMove(Move move) {
+    //Applies a move to the board, handling both the logical and visual updates
+    //Manages piece captures, board state, and GUI updates
+    private void applyMoveCustomAI(Move move) {
+        //Get piece at destination square
         String capturedPiece = boardCurrent.get(move.endCol, move.endRow);
 
-        // Handle capture
+        //Handle capture, if present
         if (!capturedPiece.equals("null")) {
+            //Remove captured piece from GUI
             ImageView capturedPieceView = imageViewMap.get(capturedPiece);
             gridPane.getChildren().remove(capturedPieceView);
+            //Remove from piece tracking map
             imageViewMap.remove(capturedPiece);
         }
 
-        // Move the piece
+        //Update GUI for moving piece
         ImageView movingPieceView = imageViewMap.get(move.piece);
+        //Remove from old position
         gridPane.getChildren().remove(movingPieceView);
+        //Add to new position
         gridPane.add(movingPieceView, move.endCol, move.endRow);
 
-        // Update board state
+        //Update board state
         boardCurrent.set(move.startCol, move.startRow, "null");
         boardCurrent.set(move.endCol, move.endRow, move.piece);
 
@@ -1477,8 +1613,6 @@ public class ChessGame extends Application {
     }
 
     // customAI ---------------------------------------
-
-
 
 
 
