@@ -18,6 +18,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Point2D;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -28,11 +29,13 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyCodeCombination;
 import javafx.scene.input.KeyCombination;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -86,6 +89,51 @@ public class ChessGame extends Application {
     );
 
 
+    private double pauseDuration = 1.0; // Default pause duration
+
+    // Add these key combinations (to increase and decrease speed of delay between moves of stockfish)
+// '=' key
+    private static final KeyCombination INCREASE_SPEED =
+            new KeyCodeCombination(KeyCode.EQUALS);
+    // '-' key
+    private static final KeyCombination DECREASE_SPEED =
+            new KeyCodeCombination(KeyCode.MINUS);
+
+
+
+    // Used to add delay between AI moves
+    private void makeDelayedMove(Runnable action) {
+        //Ensure UI updates happen on JavaFX Application Thread
+        Platform.runLater(() -> {
+            //Create pause transition with current duration setting
+            PauseTransition pause = new PauseTransition(Duration.seconds(pauseDuration));
+            pause.setOnFinished(event -> action.run());
+            pause.play();
+        });
+    }
+
+
+    //Displays a temporary alert showing the current move speed setting
+    private void showSpeedAlert(String action) {
+        //Ensure alert shows on JavaFX Application Thread
+        Platform.runLater(() -> {
+            //Create and configure alert dialog
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Move Speed");
+            alert.setHeaderText(null);
+            //Message with current speed setting
+            alert.setContentText(action + " move delay: " +
+                    String.format("%.1f", pauseDuration) + " seconds");
+
+            //Set up auto-dismiss
+            PauseTransition alertDelay = new PauseTransition(Duration.seconds(.4));
+            alertDelay.setOnFinished(event -> alert.close());
+
+            //Show alert and start auto-dismiss timer
+            alert.show();
+            alertDelay.play();
+        });
+    }
 
     //Main entry for the JavaFx application.
     //Initializes the chess game and sets up the GUI
@@ -150,7 +198,7 @@ public class ChessGame extends Application {
 
 
                 //Highlight the valid moves for the selected piece
-                piece.highlightValidMoves(boardCurrent.getStiles(), boardCurrent.getBoard(), threatenedSquares, this);
+                piece.highlightValidMoves(gridPane, boardCurrent.getBoard(), threatenedSquares, this);
 
             }
         });
@@ -192,7 +240,10 @@ public class ChessGame extends Application {
                         Piece piece = pieces.get(boardCurrent.get(initialPieceCoordinateCOL, initialPieceCoordinateROW));
                         boolean validMove = false;
                         ArrayList<Tile> threatenedSquares;
+
                         //Reset the board tile colors
+                        gridPane.getChildren().removeIf(node -> node instanceof Circle);
+                        // Reset the board tile colors
                         boardCurrent.resetTileColor();
 
                         //Convert mouse coordinates to local Grid pane coordinates
@@ -283,6 +334,18 @@ public class ChessGame extends Application {
                                 piece.setMoved(true);
                                 //Calculate threatened squares
                                 calculateThreatenedSquares();
+
+
+
+                                System.out.println("\n\nHuman MOVE: " + (isWhiteTurn ? "White" : "Black"));
+                                printGridPaneContents();
+
+                                // Print the current board in FEN format using ternary operator
+                                System.out.println((isWhiteTurn ? "White" : "Black") + " move in FEN notation: " +
+                                        boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves));
+
+
+
                                 //Switch turns
                                 switchTurn();
 
@@ -310,8 +373,7 @@ public class ChessGame extends Application {
 
                 }
             }
-            //Print the current board in FEN format
-            System.out.println(boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves));
+
         });
 
         //Set up the primary stage
@@ -358,13 +420,35 @@ public class ChessGame extends Application {
 
 
         //Set up secret mode handler (Shift + 7)
-        scene.setOnKeyPressed(event -> {
-            if (SECRET_COMBO.match(event)) {
-                //toggle secret mode
-                secretMode = !secretMode;
-                String message = secretMode ? "Secret Mode Activated: Stockfish vs Stockfish"
-                        : "Secret Mode Deactivated";
+        //First event handler: Controls move speed adjustments (stockfish delay between moves)
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            //Check for speed increase key ('=' key)
+            if (INCREASE_SPEED.match(event)) {
+                //Increase delay with upper limit of 2.0 seconds
+                pauseDuration = Math.min(2.0, pauseDuration + 0.1);
+                showSpeedAlert("Increased");
+            }
+            //Check for speed decrease key ('-' key)
+            else if (DECREASE_SPEED.match(event)) {
+                //Decrease delay with lower limit of 0.1 seconds
+                pauseDuration = Math.max(0.1, pauseDuration - 0.1);
+                showSpeedAlert("Decreased");
+            }
+        });
 
+//Second event handler: Controls secret mode (Stockfish vs Stockfish)
+        scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
+            //Check for secret mode key combination (Shift + 7)
+            if (SECRET_COMBO.match(event)) {
+                //Toggle secret mode state
+                secretMode = !secretMode;
+
+                //Prepare appropriate message based on mode state
+                String message = secretMode ?
+                        "Secret Mode Activated: Stockfish vs Stockfish" :
+                        "Secret Mode Deactivated";
+
+                //Create and show alert dialog
                 Alert alert = new Alert(Alert.AlertType.INFORMATION);
                 alert.setTitle("Secret Mode");
                 alert.setHeaderText(null);
@@ -406,14 +490,15 @@ public class ChessGame extends Application {
         //Recalculate squares under attack
         updateCheckStatus();
 
-        if(checkForDraw()){
-            return;  //Game ends
-        };
-
         if (isCheckmate()) {
             System.out.println(isWhiteTurn ? "Black wins by checkmate!" : "White wins by checkmate!");
             return;  //Game ends
         }
+        if(checkForDraw()){
+            return;  //Game ends
+        };
+
+
 
         //Handle computer moves if playing against AI
         if (playAgainstStockfish) {
@@ -442,20 +527,6 @@ public class ChessGame extends Application {
         }
     }
 
-    private void makeDelayedMove(Runnable action) {
-        //Prevents threading issues with UI updates
-        Platform.runLater(() -> {
-            //Pause for 1.2 seconds
-            PauseTransition pause = new PauseTransition(Duration.seconds(1.2));
-            //event fires after the pause
-            pause.setOnFinished(event -> action.run());
-            //start the pause transition
-            pause.play();
-        });
-    }
-
-
-
 
 
     //Handles making a move using the Stockfish chess engine
@@ -468,6 +539,15 @@ public class ChessGame extends Application {
             return;
         }
 
+        // Check for checkmate/stalemate before asking engine for moves
+        if (isCheckmate()) {
+            System.out.println("Game Over - " + (isWhiteTurn ? "Black" : "White") + " wins by checkmate!");
+            return;
+        }
+        if (checkForDraw()) {
+            System.out.println("Game Over - Draw!");
+            return;
+        }
         try {
             //current board state to FEN notation (Forsyth–Edwards Notation)
             String fen = boardCurrent.boardToFEN(pieces, isWhiteTurn, enPassantTile, halfMoveClock, numberOfMoves);
@@ -728,6 +808,8 @@ public class ChessGame extends Application {
             gridPane.getChildren().remove(pawnView);
             imageViewMap.remove(currentPiece);
 
+            //Determine piece color from the current piece
+            String color = currentPiece.contains("white") ? "white" : "black";
             //Determine the new piece type
             String newPieceType = switch (promotionPiece) {
                 case 'q' -> "queen";
@@ -740,9 +822,9 @@ public class ChessGame extends Application {
             //Increment global counter to ensure unique piece IDs
             globalCountForPromotion++;
 
-            //Create new piece
-            String newPieceName = newPieceType + globalCountForPromotion + "black";
-            Piece promotedPiece = createPiece(newPieceType, "black");
+              //Create new piece
+            String newPieceName = newPieceType + globalCountForPromotion + color;
+            Piece promotedPiece = createPiece(newPieceType, color);
             ImageView promotedPieceView = promotedPiece.getPiece();
 
             //Add new piece to pieces map
@@ -1657,8 +1739,71 @@ public class ChessGame extends Application {
 
     // customAI ---------------------------------------
 
+    //debug method
+    private void printGridPaneContents() {
+        System.out.println("\nGridPane Contents:");
 
 
+
+        // Count only ImageView nodes that represent pieces
+        long pieceCount = gridPane.getChildren().stream()
+                .filter(node -> node instanceof ImageView)
+                .count();
+
+        System.out.println("Total pieces: " + pieceCount);
+
+        // Create an 8x8 representation of the board
+        String[][] board = new String[8][8];
+        for (int i = 0; i < 8; i++) {
+            for (int j = 0; j < 8; j++) {
+                board[i][j] = ".";  // Empty square
+            }
+        }
+
+        // Fill in the pieces
+        for (Node node : gridPane.getChildren()) {
+            if (node instanceof ImageView) {
+                Integer col = GridPane.getColumnIndex(node);
+                Integer row = GridPane.getRowIndex(node);
+
+                // Add null checks
+                if (col == null) col = 0;
+                if (row == null) row = 0;
+
+                // Find which piece this ImageView represents
+                String pieceName = "Unknown";
+                for (Map.Entry<String, ImageView> entry : imageViewMap.entrySet()) {
+                    if (entry.getValue() == node) {
+                        pieceName = entry.getKey();
+                        break;
+                    }
+                }
+
+                board[row][col] = pieceName;
+                System.out.println("Piece at [" + col + "," + row + "]: " + pieceName);
+            }
+        }
+
+        // Print board representation with colors
+        System.out.println("\nBoard Layout:");
+        System.out.println("   a    b    c    d    e    f    g    h");
+        for (int i = 0; i < 8; i++) {
+            System.out.print((8-i) + " ");
+            for (int j = 0; j < 8; j++) {
+                String piece = board[i][j];
+                if (piece.equals(".")) {
+                    System.out.printf("%-5s", ".");  // Empty square
+                } else {
+                    // Get first two chars of piece name and color indicator
+                    String pieceType = piece.substring(0, Math.min(2, piece.length()));
+                    String color = piece.contains("white") ? "W" : "B";
+                    System.out.printf("%-5s", pieceType + color); // e.g., "paw" or "knb"
+                }
+            }
+            System.out.println(" " + (8-i));
+        }
+        System.out.println("   a    b    c    d    e    f    g    h\n");
+    }
 
     public static void main(String[] args) {
 
