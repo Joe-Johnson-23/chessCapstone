@@ -1,8 +1,11 @@
 package me.chessCapstone;
 
+import javafx.geometry.HPos;
+import javafx.geometry.VPos;
 import javafx.scene.Node;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -100,8 +103,10 @@ public abstract class Piece extends Node {
     }
 
     //This method is called when setOnMousePressed event occurs. It finds all valid moves are highlights a small circle inside of the appropriate square.
-    public void highlightValidMoves(StackPane[][] stiles, String[][] boardCurrent, ArrayList<Tile> threatenedSquares, ChessGame game) {
+    public void highlightValidMoves(GridPane gridPane, String[][] boardCurrent, ArrayList<Tile> threatenedSquares, ChessGame game) {
 
+        //Remove all highlight circles from the board before showing new ones
+        gridPane.getChildren().removeIf(node -> node instanceof Circle);
         //Iteration through the entire board.
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -112,10 +117,15 @@ public abstract class Piece extends Node {
                 //If the given square is a valid move and said move protects the King (if applicable; in check), it is highlighted.
                 switch(this.getType()) {
                     case "queen":
+                        //Check if move is valid for queen and doesn't put own king in check
                         if (((Queen) this).isValidQueenMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor2 = Color.PEACHPUFF;
+
+                            // Set different colors for captures vs normal moves
+                            highlightColor2 = isCapturingMove(col, row, boardCurrent) ?
+                                    Color.RED.deriveColor(0, 1, 1, 0.8) :
+                                    Color.PEACHPUFF;
                         }
                         break;
                     case "king":
@@ -123,63 +133,76 @@ public abstract class Piece extends Node {
                                 ((King) this).isCastlingValid(col, boardCurrent, threatenedSquares)) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor2 = Color.LAVENDER;
+                            // Set different colors for captures vs normal moves
+                            highlightColor2 = isCapturingMove(col, row, boardCurrent) ?
+                                    Color.RED.deriveColor(0, 1, 1, 0.8) : Color.LAVENDER;
                         }
                         break;
                     case "rook":
                         if (((Rook) this).isValidRookMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor2 = Color.TOMATO;
+                            // Set different colors for captures vs normal moves
+                            highlightColor2 = isCapturingMove(col, row, boardCurrent) ?
+                                    Color.RED.deriveColor(0, 1, 1, 0.8) : Color.TOMATO;
                         }
                         break;
                     case "bishop":
                         if (((Bishop) this).isValidBishopMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor2 = Color.GOLDENROD;
+                            // Set different colors for captures vs normal moves
+                            highlightColor2 = isCapturingMove(col, row, boardCurrent) ?
+                                    Color.RED.deriveColor(0, 1, 1, 0.8) : Color.GOLDENROD;
                         }
                         break;
                     case "knight":
                         if (((Knight) this).isValidKnightMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor2 = Color.MEDIUMAQUAMARINE;
+                            // Set different colors for captures vs normal moves
+                            highlightColor2 = isCapturingMove(col, row, boardCurrent) ?
+                                    Color.RED.deriveColor(0, 1, 1, 0.8) : Color.MEDIUMAQUAMARINE;
                         }
                         break;
                     case "pawn":
                         if (((Pawn) this).isValidPawnMove(col, row, boardCurrent) &&
                                 game.simulateMoveProtectKing(this, col, row)) {
                             isValidMove = true;
-                            highlightColor2 = Color.CORNFLOWERBLUE;
+                            // Set different colors for captures vs normal moves
+                            highlightColor2 = isCapturingMove(col, row, boardCurrent) ?
+                                    Color.RED.deriveColor(0, 1, 1, 0.8) : Color.CORNFLOWERBLUE;
                         }
                         break;
                 }
 
-                //If the switch case returned a valid move,
                 if (isValidMove) {
 
-                    StackPane tilePane = stiles[row][col];
-                    addHighlightCircle(tilePane, highlightColor2);
+                    addHighlightCircle(gridPane,col, row, highlightColor2);
                 }
             }
         }
     }
-
     //Adds a small circle in the center of a StackPane to reflect a valid Piece move.
     //Generally called after highlightValidMoves
-    private void addHighlightCircle(StackPane tilePane, Color color) {
-
-        // Remove any existing highlight circles
-        tilePane.getChildren().removeIf(node -> node instanceof Circle);
+    private void addHighlightCircle(GridPane gridPane, int col, int row, Color color) {
         // Create a new circle
-        Circle highlightCircle = new Circle(15); // Adjust the size as needed
-        highlightCircle.setFill(color.deriveColor(0, 1, 1, 0.8)); // 50% opacity
+        Circle highlightCircle = new Circle(15);
+        highlightCircle.setFill(color.deriveColor(0, 1, 1, 0.8));
         highlightCircle.setStroke(color);
         highlightCircle.setStrokeWidth(2);
-        // Add the circle to the tile
-        tilePane.getChildren().add(highlightCircle);
+
+        // Center the circle in its grid cell
+        GridPane.setHalignment(highlightCircle, HPos.CENTER);
+        GridPane.setValignment(highlightCircle, VPos.CENTER);
+
+        //Add circle to the board at specified position
+        gridPane.add(highlightCircle, col, row);
+        //Brings circle to the front
+        //Circle appears above other elements on the board
+        highlightCircle.setViewOrder(-1);
     }
+
 
     //Checks if a given location on the chess board is a potentially valid square for the Piece.
     public boolean isValidMove(int col, int row, String[][] boardCurrent, ArrayList<Tile> threatenedSquares) {
@@ -287,6 +310,17 @@ public abstract class Piece extends Node {
             //If the piece on the target square is the opponent's allow capture.
             return isWhite ? destinationPiece.contains("black") : destinationPiece.contains("white");
         }
+    }
+
+    // Checks if a move to the specified position would be a capture move
+    protected boolean isCapturingMove(int col, int row, String[][] boardCurrent) {
+        //Get the piece (if any) at the destination square
+        String destinationPiece = boardCurrent[col][row];
+        //check if empty, piece color
+        return !destinationPiece.equals("null") &&
+                (this.getColor().equals("white") ?
+                        destinationPiece.contains("black") :
+                        destinationPiece.contains("white"));
     }
 }
 

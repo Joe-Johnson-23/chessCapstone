@@ -165,7 +165,13 @@ public class Board {
 
         //TODO Finish source code documentation.
         sb.append(" ").append(enPassantConversion(enPassantTile));
-        sb.append(" ").append(castlingRights(pieces));
+        //Castling rights - use single dash instead of four dashes
+        String castlingRights = castlingRights(pieces).toString();
+        if (castlingRights.equals("----") || castlingRights.isEmpty()) {
+            sb.append(" -");  // Single dash for no castling rights
+        } else {
+            sb.append(" ").append(castlingRights);
+        }
         sb.append(" ").append(numberOfHalfMoves);
         sb.append(" ").append(numberOfMoves);
         return sb.toString();
