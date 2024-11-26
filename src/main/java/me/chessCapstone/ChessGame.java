@@ -82,58 +82,7 @@ public class ChessGame extends Application {
     private boolean playAgainstSimpleAI = false;    //Indicate whether or not to play against simple AI
     private customAi simpleAI;
 
-    //Secret mode activation for play against Stockfish (stockfish vs stockfish) : shift + 7
-    private boolean secretMode = false;
-    private static final KeyCombination SECRET_COMBO = new KeyCodeCombination(
-            KeyCode.DIGIT7, KeyCombination.SHIFT_DOWN
-    );
 
-
-    private double pauseDuration = 1.0; // Default pause duration
-
-    // Add these key combinations (to increase and decrease speed of delay between moves of stockfish)
-// '=' key
-    private static final KeyCombination INCREASE_SPEED =
-            new KeyCodeCombination(KeyCode.EQUALS);
-    // '-' key
-    private static final KeyCombination DECREASE_SPEED =
-            new KeyCodeCombination(KeyCode.MINUS);
-
-
-
-    // Used to add delay between AI moves
-    private void makeDelayedMove(Runnable action) {
-        //Ensure UI updates happen on JavaFX Application Thread
-        Platform.runLater(() -> {
-            //Create pause transition with current duration setting
-            PauseTransition pause = new PauseTransition(Duration.seconds(pauseDuration));
-            pause.setOnFinished(event -> action.run());
-            pause.play();
-        });
-    }
-
-
-    //Displays a temporary alert showing the current move speed setting
-    private void showSpeedAlert(String action) {
-        //Ensure alert shows on JavaFX Application Thread
-        Platform.runLater(() -> {
-            //Create and configure alert dialog
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Move Speed");
-            alert.setHeaderText(null);
-            //Message with current speed setting
-            alert.setContentText(action + " move delay: " +
-                    String.format("%.1f", pauseDuration) + " seconds");
-
-            //Set up auto-dismiss
-            PauseTransition alertDelay = new PauseTransition(Duration.seconds(.4));
-            alertDelay.setOnFinished(event -> alert.close());
-
-            //Show alert and start auto-dismiss timer
-            alert.show();
-            alertDelay.play();
-        });
-    }
 
     //Main entry for the JavaFx application.
     //Initializes the chess game and sets up the GUI
@@ -419,7 +368,7 @@ public class ChessGame extends Application {
         });
 
 
-        //Set up secret mode handler (Shift + 7)
+
         //First event handler: Controls move speed adjustments (stockfish delay between moves)
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             //Check for speed increase key ('=' key)
@@ -436,7 +385,7 @@ public class ChessGame extends Application {
             }
         });
 
-//Second event handler: Controls secret mode (Stockfish vs Stockfish)
+    //Second event handler: Controls secret mode (Stockfish vs Stockfish)
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             //Check for secret mode key combination (Shift + 7)
             if (SECRET_COMBO.match(event)) {
@@ -468,6 +417,10 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * shutdown
+     * (Requirement 2.1.0)
+     */
     private void shutdown() {
 
         //Terminate program upon exiting window
@@ -479,9 +432,14 @@ public class ChessGame extends Application {
         //Terminate JVM
     }
 
+    /**
+     * Switch turn
+     * (Requirement 2.0.0)
+     */
     private void switchTurn() {
         //Toggle between white and black's turn
         isWhiteTurn = !isWhiteTurn;
+        System.out.println(isWhiteTurn ? "White's turn" : "Black's turn");
 
         playMoveSound();
 
@@ -1588,6 +1546,10 @@ public class ChessGame extends Application {
     }
 
 
+    /**
+     * Play Move Sound
+     * (Requirement 2.2.0)
+     */
     //Plays a sound effect when a chess piece is moved
     //Uses JavaFX Media player to handle sound playback
     //Sound file in resources directory
@@ -1805,6 +1767,65 @@ public class ChessGame extends Application {
         System.out.println("   a    b    c    d    e    f    g    h\n");
     }
 
+    //Secret mode activation for play against Stockfish (stockfish vs stockfish) : shift + 7
+    private boolean secretMode = false;
+    private static final KeyCombination SECRET_COMBO = new KeyCodeCombination(
+            KeyCode.DIGIT7, KeyCombination.SHIFT_DOWN
+    );
+
+
+    private double pauseDuration = 1.0; // Default pause duration
+
+    // Add these key combinations (to increase and decrease speed of delay between moves of stockfish)
+// '=' key
+    private static final KeyCombination INCREASE_SPEED =
+            new KeyCodeCombination(KeyCode.EQUALS);
+    // '-' key
+    private static final KeyCombination DECREASE_SPEED =
+            new KeyCodeCombination(KeyCode.MINUS);
+
+
+    /**
+     * Delay Move
+     * (Requirement 6.3.0)
+     */
+    // Used to add delay between AI moves
+    private void makeDelayedMove(Runnable action) {
+        //Ensure UI updates happen on JavaFX Application Thread
+        Platform.runLater(() -> {
+            //Create pause transition with current duration setting
+            PauseTransition pause = new PauseTransition(Duration.seconds(pauseDuration));
+            pause.setOnFinished(event -> action.run());
+            pause.play();
+        });
+    }
+
+
+    /**
+     * show speed alert
+     * (Requirement 6.3.1)
+     */
+    //Displays a temporary alert showing the current move speed setting
+    private void showSpeedAlert(String action) {
+        //Ensure alert shows on JavaFX Application Thread
+        Platform.runLater(() -> {
+            //Create and configure alert dialog
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Move Speed");
+            alert.setHeaderText(null);
+            //Message with current speed setting
+            alert.setContentText(action + " move delay: " +
+                    String.format("%.1f", pauseDuration) + " seconds");
+
+            //Set up auto-dismiss
+            PauseTransition alertDelay = new PauseTransition(Duration.seconds(.4));
+            alertDelay.setOnFinished(event -> alert.close());
+
+            //Show alert and start auto-dismiss timer
+            alert.show();
+            alertDelay.play();
+        });
+    }
     public static void main(String[] args) {
 
         launch(args);
