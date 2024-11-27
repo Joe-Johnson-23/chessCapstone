@@ -344,6 +344,10 @@ public class ChessGame extends Application {
 
         //change this to try windows version of stockfish
 
+        /**
+         * initialize engine
+         * (Requirement 4.2.1)
+         */
         try {
             System.out.println("Attempting to initialize chess engine...");
             //Initialize the Stockfish engine based on OS type
@@ -480,6 +484,10 @@ public class ChessGame extends Application {
                 switchTurn();
             });
         } else {
+            /**
+             * 1 v 1
+             * (Requirement 4.0.0)
+             */
             //If neither AI condition is met, wait for human player input
             //The game continues through mouse event handlers
         }
@@ -487,6 +495,14 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * Stockfish integration in ChessGame
+     * (Requirement 4.2.0)
+     */
+    /**
+     * makeEngineMove
+     * (Requirement 4.2.2)
+     */
     //Handles making a move using the Stockfish chess engine
     //Converts current board state to FEN, gets best move from engine, and applies it
     private void makeEngineMove() {
@@ -530,6 +546,10 @@ public class ChessGame extends Application {
         }
     }
 
+    /**
+     * getBestMoveFromEngine
+     * (Requirement 4.2.3)
+     */
     private String getBestMoveFromEngine() {
         try {
             String line;
@@ -550,14 +570,21 @@ public class ChessGame extends Application {
         return null;
     }
 
+
+    /**
+     * applyEngineMove
+     * (Requirement 4.2.4)
+     */
     //Applies a move calculated by the Stockfish engine to the chess board
     //Handles piece movement, captures, promotions, and special moves
     private void applyEngineMove(String move) {
+        System.out.println("Applying engine move: " + move);
         try {
             int startCol = move.charAt(0) - 'a';
             int startRow = '8' - move.charAt(1);
             int endCol = move.charAt(2) - 'a';
             int endRow = '8' - move.charAt(3);
+
 
             String movingPiece = boardCurrent.get(startCol, startRow);
             String capturedPiece = boardCurrent.get(endCol, endRow);
@@ -675,6 +702,10 @@ public class ChessGame extends Application {
     }
 
 
+    /**
+     * Update check status
+     * (Requirement 2.3.0)
+     */
     private void updateCheckStatus() {
         //Update which squares are under attack by each side
         calculateThreatenedSquares();
@@ -683,8 +714,9 @@ public class ChessGame extends Application {
         boolean whiteInCheck = whiteKing.isInCheck(squaresThreatenedByBlack);
         boolean blackInCheck = blackKing.isInCheck(squaresThreatenedByWhite);
 
-        // System.out.println("White in check: " + whiteInCheck);
-        // System.out.println("Black in check: " + blackInCheck);
+        //To verify check status
+         System.out.println("White in check: " + whiteInCheck);
+         System.out.println("Black in check: " + blackInCheck);
 
         //Update the king's tile (red if in check)
         updateKingTileColor(whiteKing, whiteInCheck, lastWhiteKingPos);
@@ -693,6 +725,10 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * Update king tile color
+     * (Requirement 2.4.0)
+     */
     //when a king is in check its tile is turned red
     private void updateKingTileColor(King king, boolean isInCheck, int[] lastPos) {
         //Get current king position
@@ -719,6 +755,10 @@ public class ChessGame extends Application {
     }
 
 
+    /**
+     * restore tile color when king escapes check
+     * (Requirement 2.4.1)
+     */
     //when a king is not in check, the tile it was on last is white or gray
     private void restoreOriginalColor(int row, int col) {
         StackPane tile = boardCurrent.getStiles()[row][col];
@@ -736,6 +776,10 @@ public class ChessGame extends Application {
 
     //stockfish__________helpermethods____________________________________stockfish
 
+    /**
+     * handleSpecialMoves
+     * (Requirement 4.2.5)
+     */
     //Handles special moves for the chess engine (Stockfish)
     private void handleSpecialMoves(String movingPiece, int startCol, int startRow, int endCol, int endRow, char promotionPiece) {
         //Strip numbers and color from piece name to get base piece type (e.g., "pawn1white" -> "pawn")
@@ -747,7 +791,7 @@ public class ChessGame extends Application {
         } else if (pieceType.equals("king") && Math.abs(endCol - startCol) == 2) {
             handleCastlingStockfish(startCol, startRow, endCol, endRow);
         } else if (pieceType.equals("pawn") && startCol != endCol && boardCurrent.get(endCol, endRow).equals("null")) {
-            handleEnPassant(startCol, startRow, endCol, endRow);
+            handleEnPassantStockfish(startCol, startRow, endCol, endRow);
         }
 
         //Update last move for future en passants
@@ -757,6 +801,10 @@ public class ChessGame extends Application {
         }
     }
 
+    /**
+     * handle engine pawn promotion
+     * (Requirement 4.2.6)
+     */
     //Handles pawn promotion for the chess engine (Stockfish)
     private void handleEnginePawnPromotion(String currentPiece, int col, int row, char promotionPiece) {
         //Ensure UI updates happen on JavaFX Application Thread
@@ -805,6 +853,10 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * handle castling for stockfish
+     * (Requirement 4.2.9)
+     */
     //Handles castling moves for the Stockfish engine
     private void handleCastlingStockfish(int startCol, int startRow, int endCol, int endRow) {
         //Determine if this is kingside (right) or queenside (left) castling
@@ -824,8 +876,12 @@ public class ChessGame extends Application {
         }
     }
 
+    /**
+     * handle en passant for stockfish
+     * (Requirement 4.2.11)
+     */
     // Handles en passant captures for the Stockfish engine
-    private void handleEnPassant(int startCol, int startRow, int endCol, int endRow) {
+    private void handleEnPassantStockfish(int startCol, int startRow, int endCol, int endRow) {
         // Get the pawn being captured
         String capturedPawn = boardCurrent.get(endCol, startRow);
         ImageView capturedPawnView = imageViewMap.get(capturedPawn);
@@ -1063,6 +1119,10 @@ public class ChessGame extends Application {
         calculateThreatenedSquares();
     }
 
+    /**
+     * simulate moves that protect king (see if move is valid)
+     * (Requirement 2.7.0)
+     */
     //Simulates a move to check if it would leave the king in check
     //Also validates if the move is legal
     public boolean simulateMoveProtectKing(Piece piece, int endCol, int endRow) {
@@ -1173,13 +1233,18 @@ public class ChessGame extends Application {
         }
     }
 
+
+    /**
+     * intitialize stockfish path
+     * (Requirement 4.2.7)
+     */
     //Initializes the path to the Stockfish chess engine executable
 //Attempts to load from resources first, then falls back to project directory
     private Path initializeStockfishPath(String stockfishRelativePath) throws IOException {
         //First, try to load from resources
         InputStream inputStream = getClass().getResourceAsStream("/" + stockfishRelativePath);
         if (inputStream != null) {
-            // \Create temporary directory for Stockfish
+            // Create temporary directory for Stockfish
             Path tempDir = Files.createTempDirectory("stockfish");
             Path tempFile = tempDir.resolve("stockfish");
 
@@ -1211,6 +1276,10 @@ public class ChessGame extends Application {
     }
 
 
+    /**
+     * intitialize stockfish
+     * (Requirement 4.2.8)
+     */
     //Initializes the Stockfish chess engine based on the operating system
     //Selects appropriate binary version and sets up the engine
     private void initializeStockfish() throws IOException {
@@ -1241,6 +1310,7 @@ public class ChessGame extends Application {
         //Initialize the chess engine with the selected binary
         engine = new ChessEngine(stockfishPath.toString());
     }
+
 
 
 
@@ -1494,6 +1564,10 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * restart application
+     * (Requirement 2.9.0)
+     */
     //Restarts the chess game by creating a new instance
     private void restartApplication(Stage currentStage) {
         //Ensure UI updates happen on JavaFX Application Thread
@@ -1501,7 +1575,7 @@ public class ChessGame extends Application {
             try {
                 //Create a new instance of ChessGame
                 ChessGame newInstance = new ChessGame();
-                //Start new game using existing stage
+                //Start new game using current stage
                 newInstance.start(currentStage);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -1511,6 +1585,10 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * Handle Game End
+     * (Requirement 2.10.0)
+     */
     //Handles the end of game scenario with a popup dialog
     //Offers options to play again or exit the game
     private void handleGameEnd(String message) {
