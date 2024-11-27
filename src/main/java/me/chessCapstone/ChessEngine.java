@@ -3,6 +3,17 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.concurrent.*;
 
+
+
+/**
+ * Stockfish
+ * (Requirement 4.1.0, 4.1.1)
+ */
+/**
+ * Manages communication with the Stockfish engine,
+ * handling engine initialization,
+ * command sending, and output reading through buffered streams
+ */
 public class ChessEngine {
     //Process to run the Stockfish engine
     private Process engineProcess;
@@ -13,6 +24,9 @@ public class ChessEngine {
     //Executor service for running background tasks
     private ExecutorService executor;
     //Queue to store engine output
+    // The outputQueue is a BlockingQueue that acts as a buffer
+    // between the background thread reading from Stockfish and
+    // the main thread wanting to get responses.
     private BlockingQueue<String> outputQueue = new LinkedBlockingQueue<>();
 
     public ChessEngine(String stockfishRelativePath) throws IOException {
@@ -50,13 +64,24 @@ public class ChessEngine {
         startReadingOutput();
     }
 
+
+    /**
+     * Stockfish start reading output
+     * (Requirement 4.1.2)
+     */
+    //StartReadingOutput, handleOutput, readLine
+    //Prevents blocking: The background thread can continuously read Stockfish's output without waiting for the main thread
+    //Provides thread safety: The BlockingQueue safely handles communication between the background and main threads
+    //Buffers responses: If Stockfish sends multiple lines of output, they're queued up until the main thread is ready to read them
     private void startReadingOutput() {
         //Submit a task to the executor to continuously read engine output
         executor.submit(() -> {
             try {
                 String line;
+
                 //Read lines from the engine until the stream ends
                 while ((line = processReader.readLine()) != null) {
+                    System.out.println("startReadingOutput "+line);
                     handleOutput(line);
                 }
             } catch (IOException e) {
@@ -65,14 +90,31 @@ public class ChessEngine {
         });
     }
 
+
+    /**
+     * handle output from startReadingOutput
+     * (Requirement 4.1.3)
+     */
     private void handleOutput(String output) {
         //Add the engine output to the queue
+        System.out.println("handleOutput: "+output);
+        //Adds element to queue
+        //Non-blocking operation
+        //Returns immediately
         outputQueue.offer(output);
     }
 
+
+    /**
+     * readLine called by getBestMoveFromEngine in ChessGame
+     * (Requirement 4.1.4)
+     */
     public String readLine() throws IOException {
         try {
             //Try to get a line from the output queue, waiting up to 5 seconds
+            //Tries to retrieve and remove head of queue
+            //Blocking operation with timeout
+            //Waits up to specified time for element
             return outputQueue.poll(5, TimeUnit.SECONDS);
         } catch (InterruptedException e) {
             //If interrupted, re-interrupt the thread and throw an IOException
@@ -81,6 +123,10 @@ public class ChessEngine {
         }
     }
 
+    /**
+     * sendCommand- Writes commands to the engine from makeEngineMove in ChessGame
+     * (Requirement 4.1.5)
+     */
     public void sendCommand(String command) throws IOException {
         //Print the command being sent (for debugging)
         System.out.println("Sending: " + command);
@@ -89,6 +135,7 @@ public class ChessEngine {
         //Ensure the command is sent immediately
         processWriter.flush();
     }
+
 
     public void quit() throws IOException, InterruptedException {
         //Send the quit command to the engine
