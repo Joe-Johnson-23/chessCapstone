@@ -1325,8 +1325,8 @@ public class ChessGame extends Application {
         //Difficulty selection (initially hidden)
         ToggleGroup difficultyGroup = new ToggleGroup();
         ToggleButton easyButton = createDifficultyButton("Easy", 1, difficultyGroup);
-        ToggleButton mediumButton = createDifficultyButton("Medium", 7, difficultyGroup);
-        ToggleButton hardButton = createDifficultyButton("Hard", 10, difficultyGroup);
+        ToggleButton mediumButton = createDifficultyButton("Medium", 2, difficultyGroup);
+        ToggleButton hardButton = createDifficultyButton("Hard", 3, difficultyGroup);
         //Arrange difficulty selection
         VBox difficultyBox = new VBox(20, easyButton, mediumButton, hardButton);
         difficultyBox.setAlignment(Pos.CENTER);
