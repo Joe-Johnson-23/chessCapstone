@@ -373,6 +373,10 @@ public class ChessGame extends Application {
 
 
 
+        /**
+         *  event Handler to increase or decrease speed
+         * (Requirement 6.3.2)
+         */
         //First event handler: Controls move speed adjustments (stockfish delay between moves)
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             //Check for speed increase key ('=' key)
@@ -389,6 +393,10 @@ public class ChessGame extends Application {
             }
         });
 
+        /**
+         *  event Handler to activate or deactivate
+         * (Requirement 6.3.1)
+         */
     //Second event handler: Controls secret mode (Stockfish vs Stockfish)
         scene.addEventHandler(KeyEvent.KEY_PRESSED, event -> {
             //Check for secret mode key combination (Shift + 7)
@@ -1163,39 +1171,6 @@ public class ChessGame extends Application {
     }
 
 
-    //Checkmate occurs when the king is in check and there are no legal moves
-    private boolean isCheckmate() {
-        //Get the king and threatened squares based on whose turn it is
-        King currentKing = isWhiteTurn ? whiteKing : blackKing;
-        ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
-
-        // First check if king is in check
-        if (!currentKing.isInCheck(threatenedSquares)) {
-            return false;
-        }
-
-        //If there are any legal moves, it's not checkmate
-        if (!hasNoLegalMoves()) {
-            return false;
-        }
-
-        //It's checkmate, show popup
-        Platform.runLater(() -> {
-            //Determine winner based on whose turn it was
-            String winningColor = isWhiteTurn ? "Black" : "White";
-            //popup for checkmate
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Checkmate");
-            alert.setHeaderText(null);
-            alert.setContentText("CHECKMATE! " + winningColor + " wins!");
-            alert.showAndWait();
-
-            handleGameEnd("Great Game!");
-        });
-
-        return true;
-    }
-
 
 
 
@@ -1431,16 +1406,66 @@ public class ChessGame extends Application {
     }
 
 
+    /**
+     *
+     * *********** *********** CHECKMATE *********** *********** *********** BEGIN
+     */
+    /**
+     * isCheckmate
+     * (Requirement 5.0.1)
+     */
+    //Checkmate occurs when the king is in check and there are no legal moves
+    private boolean isCheckmate() {
+        //Get the king and threatened squares based on whose turn it is
+        King currentKing = isWhiteTurn ? whiteKing : blackKing;
+        ArrayList<Tile> threatenedSquares = isWhiteTurn ? squaresThreatenedByBlack : squaresThreatenedByWhite;
+
+        // First check if king is in check
+        if (!currentKing.isInCheck(threatenedSquares)) {
+            return false;
+        }
+
+        //If there are any legal moves, it's not checkmate
+        if (!hasNoLegalMoves()) {
+            return false;
+        }
+
+        //It's checkmate, show popup
+        Platform.runLater(() -> {
+            //Determine winner based on whose turn it was
+            String winningColor = isWhiteTurn ? "Black" : "White";
+            //popup for checkmate
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Checkmate");
+            alert.setHeaderText(null);
+            alert.setContentText("CHECKMATE! " + winningColor + " wins!");
+            alert.showAndWait();
+
+            handleGameEnd("Great Game!");
+        });
+
+        return true;
+    }
+    /**
+     *
+     * *********** *********** CHECKMATE *********** *********** *********** END
+     */
+
+    /**
+     *
+     * *********** *********** D R A W s *********** *********** *********** BEGIN
+     */
+    /**
+     * Draws
+     * (Requirement 5.1.0)
+     */
 
 
 
-
-    // Although a threefold repetition usually occurs after
-    // consecutive moves, there is no requirement that the moves
-    // be consecutive for a claim to
-    // be valid. The rule applies to positions, not moves.
-
-    //draw methods
+    /**
+     * getPositionKey
+     * (Requirement 5.1.1)
+     */
     //Creates a unique string key representing the current board position
     //Used for detecting threefold repetition
     private String getPositionKey() {
@@ -1454,16 +1479,23 @@ public class ChessGame extends Application {
             }
         }
 
+
         //Append whose turn it is
         //This is necessary because same position with different turn is different state
         sb.append(isWhiteTurn ? "w" : "b");
+
+        //Log position key
+        //System.out.println("POSITION KEY ----------> " + sb.toString());
 
         return sb.toString();
     }
 
 
 
-
+    /**
+     * check for draw
+     * (Requirement 5.1.2)
+     */
     //Checks if the current position is a draw
     //Draw conditions: threefold repetition, fifty-move rule, or stalemate
     private boolean checkForDraw() {
@@ -1479,6 +1511,15 @@ public class ChessGame extends Application {
     }
 
 
+
+    // Although a threefold repetition usually occurs after
+    // consecutive moves, there is no requirement that the moves
+    // be consecutive for a claim to
+    // be valid. The rule applies to positions, not moves.
+    /**
+     * check for threefold repetition
+     * (Requirement 5.1.3)
+     */
     //Checks if the current position has occurred three times
     //Uses position key to track unique board states
     private boolean checkForThreefoldRepetition() {
@@ -1493,8 +1534,12 @@ public class ChessGame extends Application {
     }
 
 
+    /**
+     * is Stalemate
+     * (Requirement 5.1.4)
+     */
     //Checks if the current position is a stalemate
-//Stalemate occurs when the player has no legal moves but their king is not in check
+    //Stalemate occurs when the player has no legal moves but their king is not in check
     private boolean isStalemate() {
         //First check if there are any legal moves available
         if (hasNoLegalMoves()) {
@@ -1507,6 +1552,10 @@ public class ChessGame extends Application {
         return false;
     }
 
+    /**
+     * handle draw
+     * (Requirement 5.1.5)
+     */
     //Handles the draw scenario by displaying a popup and ending the game
     private void handleDraw() {
         //Ensure UI updates happen on JavaFX Application Thread
@@ -1523,6 +1572,10 @@ public class ChessGame extends Application {
         });
     }
 
+    /**
+     * has no legal moves
+     * (Requirement 5.1.6)
+     */
     //Checks if the current player has any legal moves available
     //Iterates through all pieces and possible destinations to find valid moves
     private boolean hasNoLegalMoves() {
@@ -1537,6 +1590,7 @@ public class ChessGame extends Application {
 
                 //Check if square has a piece of current player's color
                 if (!pieceKey.equals("null") && pieceKey.contains(currentColor)) {
+                    //Get the piece object from the pieces map
                     Piece piece = pieces.get(pieceKey);
 
                     //If piece exists, check all possible destination squares
@@ -1557,9 +1611,10 @@ public class ChessGame extends Application {
         //If no legal moves were found, return true
         return true;
     }
-
-
-    //Stalemate ---------------------------
+    /**
+     * *********** *********** D R A W S  *********** *********** *********** END
+     *
+     */
 
 
 
@@ -1655,10 +1710,18 @@ public class ChessGame extends Application {
 
 
 
+    /**
+     * CustomAi integration in ChessGame
+     * (Requirement 4.4.0)
+     */
     // customAI ---------------------------------------
     // simple chess ai
     //Makes a move for the simple AI by evaluating all possible moves
     //and selecting the one with the highest score
+    /**
+     * makeSimpleAIMove
+     * (Requirement 4.4.1)
+     */
     private void makeSimpleAIMove() {
         //Get all possible legal moves for AI (black pieces)
         List<Move> legalMoves = getAllLegalMovesCustomAI(false);
@@ -1709,12 +1772,17 @@ public class ChessGame extends Application {
                 bestMove.endCol, bestMove.endRow,
                 bestScore);
 
+
         //Apply the best move found
         applyMoveCustomAI(bestMove);
     }
 
 
 
+    /**
+     * getAllLegalMovesCustomAI
+     * (Requirement 4.4.2)
+     */
     //Gets all legal moves for either white or black pieces
 //Checks every possible move for each piece and validates it
     private List<Move> getAllLegalMovesCustomAI(boolean forWhite) {
@@ -1744,6 +1812,10 @@ public class ChessGame extends Application {
         return legalMoves;
     }
 
+    /**
+     * applyMoveCustomAI
+     * (Requirement 4.4.3)
+     */
     //Applies a move to the board, handling both the logical and visual updates
     //Manages piece captures, board state, and GUI updates
     private void applyMoveCustomAI(Move move) {
@@ -1881,7 +1953,7 @@ public class ChessGame extends Application {
 
     /**
      * show speed alert
-     * (Requirement 6.3.1)
+     * (Requirement 6.3.3)
      */
     //Displays a temporary alert showing the current move speed setting
     private void showSpeedAlert(String action) {
