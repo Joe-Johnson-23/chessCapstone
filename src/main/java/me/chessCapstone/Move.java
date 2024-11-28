@@ -1,5 +1,10 @@
 package me.chessCapstone;
 
+
+/**
+ * Move (class)
+ * (Requirement 4.3.5)
+ */
 //Represents a chess move with starting position, ending position,
 //and piece information
 //helps with move validation and applying moves for custom AI

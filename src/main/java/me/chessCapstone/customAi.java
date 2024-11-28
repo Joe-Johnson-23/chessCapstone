@@ -3,7 +3,10 @@ package me.chessCapstone;
 
 //Custom chess AI implementation using piece-square tables and material evaluation
 //Evaluates positions based on piece values, position values, and strategic factors
-
+/**
+ * Custom AI (class)
+ * (Requirement 4.3.0)
+ */
 public class customAi {
     //Material values for pieces (in centipawns)
     private static final int PAWN_VALUE = 100;
@@ -79,6 +82,10 @@ public class customAi {
         this.isWhite = isWhite;
     }
 
+    /**
+     * evaluate position
+     * (Requirement 4.3.1)
+     */
     //Evaluates current board position
     public int evaluatePosition(Board board, Move lastMove) {
         int score = 0;
@@ -122,6 +129,11 @@ public class customAi {
         return isWhite ? score : -score;
     }
 
+
+    /**
+     * get material value
+     * (Requirement 4.3.2)
+     */
     //Calculates the material value of a piece
     private int getMaterialValue(String piece) {
         //Determine piece color and set appropriate multiplier
@@ -139,6 +151,11 @@ public class customAi {
         return 0;
     }
 
+
+    /**
+     * get positional value
+     * (Requirement 4.4.3)
+     */
     //Calculates the positional value of a piece based on its location
     private int getPositionValue(String piece, int col, int row) {
         boolean isPieceWhite = piece.contains("white");
@@ -171,6 +188,10 @@ public class customAi {
 
 
 
+    /**
+     * evaluate center control
+     * (Requirement 4.3.4)
+     */
     //Evaluates control of the center squares of the board
     //Center control is crucial for chess strategy
     private int evaluateCenterControl(Board board) {
