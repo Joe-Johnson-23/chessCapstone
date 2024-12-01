@@ -1,5 +1,9 @@
 package me.chessCapstone;
 
+/**
+ * Knight
+ * (Requirement 3.5.0)
+ */
 public class Knight extends Piece {
 
     //Constructor for a Knight object. Requires a String representation of color.

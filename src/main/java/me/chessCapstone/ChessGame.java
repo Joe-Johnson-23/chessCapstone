@@ -111,6 +111,10 @@ public class ChessGame extends Application {
         initializeGame();
 
         //Mouse pressed : selects a piece and highlight its valid moves
+        /**
+         * Picking and moving pieces(mouse pressed)
+         * (Requirement 1.1.0)
+         */
         gridPane.setOnMousePressed(event -> {
             //Calculate tile coordinates based on mouse position
             int col = (int) (event.getSceneX() / TILE_SIZE);
@@ -156,6 +160,10 @@ public class ChessGame extends Application {
         Scene scene = new Scene(gridPane, TILE_SIZE * BOARD_SIZE, TILE_SIZE * BOARD_SIZE);
 
         //Mouse dragged : moves the selected piece
+        /**
+         * Picking and moving pieces(mouse dragged)
+         * (Requirement 1.1.0)
+         */
         scene.setOnMouseDragged(event -> {
             if (selectedPiece != null) {
                 //Calucate the drag distance based on initial mouse position
@@ -169,6 +177,10 @@ public class ChessGame extends Application {
         });
 
         //Mouse released : places the piece and updates the board
+        /**
+         * Picking and moving pieces(mouse released)
+         * (Requirement 1.1.0)
+         */
         scene.setOnMouseReleased(event -> {
             if (selectedPiece != null) {
                 //Reset the translation
@@ -906,7 +918,10 @@ public class ChessGame extends Application {
 
 
 
-
+    /**
+     * Pawn Promotion
+     * (Requirement 6.1.0)
+     */
     //Handles the promotion of a pawn when it reaches the final row
     private void handlePawnPromotion(String currentPiece, int col, int row, boolean isWhite) {
         //List of promotion options available to the player
@@ -1083,6 +1098,10 @@ public class ChessGame extends Application {
     }
 
     //Handles the castling move(special rules) for a King and its associated Rook
+    /**
+     * Handle castling
+     * (Requirement 2.5.0)
+     */
     private void handleCastling(int startCol, int startRow, int endCol, int endRow) {
         //Determine if the castling is king-side or queen-side based on the king's final position
         boolean isKingSide = endCol > startCol;
@@ -1174,7 +1193,10 @@ public class ChessGame extends Application {
 
 
 
-
+    /**
+     * HandlePawnMove
+     * (Requirement 2.8.0)
+     */
     //Handles special pawn moves including double moves and en passant captures
     private void handlePawnMove(String pieceType, int row, int initialPieceCoordinateROW, int col) {
         // Check for double pawn move
@@ -1192,6 +1214,10 @@ public class ChessGame extends Application {
             enPassantTile.setRow(-1);
         }
 
+        /**
+         * Handle EnPassant
+         * (Requirement 2.6.0)
+         */
         //Check for en passant capture
         if (EnPassantPossible) {
             int capturedPawnRow = pieceType.contains("white") ? row + 1 : row - 1;

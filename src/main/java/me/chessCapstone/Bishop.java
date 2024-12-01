@@ -1,5 +1,9 @@
 package me.chessCapstone;
 
+/**
+ * Bishop
+ * (Requirement 3.2.0)
+ */
 public class Bishop extends Piece {
 
     //Constructor for a Bishop object. Requires a String representation of color.

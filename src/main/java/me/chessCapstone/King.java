@@ -2,6 +2,10 @@ package me.chessCapstone;
 
 import java.util.ArrayList;
 
+/**
+ * King
+ * (Requirement 3.4.0)
+ */
 public class King extends Piece {
 
     //Constructor for a King object. Requires a String representation of color.
@@ -46,6 +50,10 @@ public class King extends Piece {
         return false;
     }
 
+    /**
+     * CheckMate
+     * (Requirement 5.0.0)
+     */
     //This method checks if the King is in Check, given the enemy's threatened squares.
     public boolean isInCheck(ArrayList<Tile> threatenedSquares) {
         //Iterate the enemy's threatened squares.
