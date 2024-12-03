@@ -1,5 +1,9 @@
 package me.chessCapstone;
 
+/**
+ * Rook
+ * (Requirement 3.1.0)
+ */
 public class Rook extends Piece {
 
     //Constructor for a Rook object. Requires a String representation of color.

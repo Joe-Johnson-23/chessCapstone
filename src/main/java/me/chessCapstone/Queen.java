@@ -1,5 +1,9 @@
 package me.chessCapstone;
 
+/**
+ * Queen
+ * (Requirement 3.3.0)
+ */
 public class Queen extends Piece {
 
     //Constructor for a Queen object. Requires a String representation of color.

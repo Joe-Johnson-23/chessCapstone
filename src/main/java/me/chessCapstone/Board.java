@@ -87,6 +87,10 @@ public class Board {
         }
     }
 
+    /**
+     * FEN notation
+     * (Requirement 1.2.0)
+     */
     //Returns a String representation of the Forsyth-Edwards Notation.
     //FEN Notation is passed to Stockfish in order for it to understand the happenings on the board.
     public String boardToFEN(HashMap<String, Piece> pieces, boolean isWhiteTurn, Tile enPassantTile, int numberOfHalfMoves, int numberOfMoves) {

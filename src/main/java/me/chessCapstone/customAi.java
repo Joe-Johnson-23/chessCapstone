@@ -154,7 +154,7 @@ public class customAi {
 
     /**
      * get positional value
-     * (Requirement 4.4.3)
+     * (Requirement 4.3.3)
      */
     //Calculates the positional value of a piece based on its location
     private int getPositionValue(String piece, int col, int row) {

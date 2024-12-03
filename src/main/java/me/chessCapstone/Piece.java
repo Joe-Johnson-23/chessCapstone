@@ -13,7 +13,10 @@ import javafx.scene.shape.Circle;
 import java.util.ArrayList;
 import java.util.Objects;
 
-
+/**
+ * Piece Class
+ * (Requirement 3.0.0)
+ */
 //The Piece class serves as a superclass for all other chess pieces (e.g. King, Queen, etc.).
 public abstract class Piece extends Node {
 
@@ -102,6 +105,10 @@ public abstract class Piece extends Node {
         this.hasMoved = moved;
     }
 
+    /**
+     * Highlight valid move
+     * (Requirement 3.0.1)
+     */
     //This method is called when setOnMousePressed event occurs. It finds all valid moves are highlights a small circle inside of the appropriate square.
     public void highlightValidMoves(GridPane gridPane, String[][] boardCurrent, ArrayList<Tile> threatenedSquares, ChessGame game) {
 
@@ -226,6 +233,10 @@ public abstract class Piece extends Node {
         };
     }
 
+    /**
+     * Squares
+     * (Requirement 1.0.0)
+     */
     //Returns an ArrayList containing all the Squares it controls.
     public ArrayList<Tile> findThreatenedSquares(String[][] boardCurrent) {
 

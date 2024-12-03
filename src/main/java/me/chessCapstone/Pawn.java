@@ -1,5 +1,9 @@
 package me.chessCapstone;
 
+/**
+ * Pawn
+ * (Requirement 3.6.0)
+ */
 public class Pawn extends Piece {
 
     //Constructor for a Pawn object. Requires a String representation of color.
