@@ -10,8 +10,13 @@ public class Board {
 
     //Tracks highlighted squares on the board.
     private StackPane[][] stiles = new StackPane[BOARD_SIZE][BOARD_SIZE];
-    //Tracks Pieces on the board.
+    
+    /**
+     * Squares
+     * (Requirement 1.0.0)
+     */
     private String[][] board = new String[BOARD_SIZE][BOARD_SIZE];
+    
     //Dimensions of the board.
     private static final int BOARD_SIZE = 8;
 
